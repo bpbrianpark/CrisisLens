@@ -1,42 +1,62 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+#map-container {
+  width: 100%;
+  height: 100vh;
+  /* temporarily set the background color so we can tell where the map container is positioned */
+  background-color: lightgrey;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.sidebar {
+  background-color: rgba(35, 55, 75, 0.9);
+  color: #fff;
+  padding: 6px 12px;
+  font-family: monospace;
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 12px;
+  border-radius: 4px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Style the geocoder input */
+.mapboxgl-ctrl-geocoder {
+  min-width: 300px !important;
+  font-family: inherit;
 }
 
-.card {
-  padding: 2em;
+/* Dark theme for the search box to match navigation-night style */
+.mapboxgl-ctrl-geocoder {
+  background: #404040 !important;
 }
 
-.read-the-docs {
-  color: #888;
+.mapboxgl-ctrl-geocoder--input {
+  color: #ffffff !important;
+  background-color: #404040 !important;
+}
+
+.mapboxgl-ctrl-geocoder--input::placeholder {
+  color: #999 !important;
+}
+
+.mapboxgl-ctrl-geocoder .suggestions {
+  background-color: #404040 !important;
+}
+
+.mapboxgl-ctrl-geocoder .suggestions > .active > a,
+.mapboxgl-ctrl-geocoder .suggestions > li > a:hover {
+  background-color: #555 !important;
+  color: #ffffff !important;
+}
+
+.mapboxgl-ctrl-geocoder--suggestion-title,
+.mapboxgl-ctrl-geocoder--suggestion-address {
+  color: #ffffff !important;
 }

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@livepeer/react": "^4.2.9",
+    "axios": "^1.7.9",
     "livepeer": "^3.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

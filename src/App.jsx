@@ -7,7 +7,6 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 import "./App.css";
 
-// Add your Mapbox access token here
 mapboxgl.accessToken =
   "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnBpM3R6MHc5czJpcHlybHBzNnRnNCJ9.7rfcscc9ABryDmhQZWdOWw";
 
@@ -18,7 +17,6 @@ function App() {
   const [locationError, setLocationError] = useState(null);
 
   useEffect(() => {
-    // Get user's location
     if ("geolocation" in navigator) {
       console.log("Requesting location...");
       navigator.geolocation.getCurrentPosition(
@@ -45,26 +43,23 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Initialize the map
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/navigation-night-v1",
-      center: userLocation || [-74.5, 40], // Use user location if available, otherwise use default
+      center: userLocation || [-74.5, 40],
       zoom: 9,
     });
 
-    // Add search control
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl,
       marker: true,
       placeholder: "Search for places",
-      proximity: userLocation, // Bias results toward user location
+      proximity: userLocation,
     });
 
     mapRef.current.addControl(geocoder, "top-left");
 
-    // Add geolocate control
     const geolocateControl = new mapboxgl.GeolocateControl({
       positionOptions: {
         enableHighAccuracy: true,
@@ -75,7 +70,28 @@ function App() {
 
     mapRef.current.addControl(geolocateControl);
 
-    // If we have user location, fly to it once the map loads
+    const fixedLocation = [-123.249, 49.2606];
+
+    const markerElement = document.createElement('div');
+    markerElement.style.backgroundImage = 'url(https://uxwing.com/wp-content/themes/uxwing/download/e-commerce-currency-shopping/flame-icon.png)';
+    markerElement.style.backgroundSize = 'contain';
+    markerElement.style.width = '30px';
+    markerElement.style.height = '30px';
+
+    const marker = new mapboxgl.Marker(markerElement)
+      .setLngLat(fixedLocation)
+      .addTo(mapRef.current);
+
+    const popup = new mapboxgl.Popup({ offset: 25 })
+      .setText("This is a generic popup message.");
+
+    marker.setPopup(popup);
+    marker.getElement().style.cursor = 'pointer';
+    marker.getElement().addEventListener('click', () => {
+      popup.addTo(mapRef.current);
+    });
+    marker.setPopup(popup);
+
     if (userLocation) {
       mapRef.current.on("load", () => {
         mapRef.current.flyTo({
@@ -88,7 +104,7 @@ function App() {
     return () => {
       mapRef.current?.remove();
     };
-  }, [userLocation]); // Now depends on userLocation
+  }, [userLocation]);
 
   return (
     <>

@@ -1,0 +1,62 @@
+#root {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+#map-container {
+  width: 100%;
+  height: 100vh;
+  /* temporarily set the background color so we can tell where the map container is positioned */
+  background-color: lightgrey;
+}
+
+.sidebar {
+  background-color: rgba(35, 55, 75, 0.9);
+  color: #fff;
+  padding: 6px 12px;
+  font-family: monospace;
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 12px;
+  border-radius: 4px;
+}
+
+/* Style the geocoder input */
+.mapboxgl-ctrl-geocoder {
+  min-width: 300px !important;
+  font-family: inherit;
+}
+
+/* Dark theme for the search box to match navigation-night style */
+.mapboxgl-ctrl-geocoder {
+  background: #404040 !important;
+}
+
+.mapboxgl-ctrl-geocoder--input {
+  color: #ffffff !important;
+  background-color: #404040 !important;
+}
+
+.mapboxgl-ctrl-geocoder--input::placeholder {
+  color: #999 !important;
+}
+
+.mapboxgl-ctrl-geocoder .suggestions {
+  background-color: #404040 !important;
+}
+
+.mapboxgl-ctrl-geocoder .suggestions > .active > a,
+.mapboxgl-ctrl-geocoder .suggestions > li > a:hover {
+  background-color: #555 !important;
+  color: #ffffff !important;
+}
+
+.mapboxgl-ctrl-geocoder--suggestion-title,
+.mapboxgl-ctrl-geocoder--suggestion-address {
+  color: #ffffff !important;
+}

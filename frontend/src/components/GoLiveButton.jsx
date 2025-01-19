@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase/firebase";
 import PropTypes from "prop-types";
 import "../App.css";
 
@@ -15,23 +13,13 @@ const GoLiveButton = ({ handleStartStream }) => {
           const { latitude, longitude } = position.coords;
 
           try {
-            await addDoc(collection(db, "videos"), {
-              userId: null,
-              longitude,
-              latitude,
-              videoId: null,
-              startTime: serverTimestamp(),
-              streamKey: null,
-              playbackId: null,
-              category: null,
-            });
-            handleStartStream();
+            await handleStartStream({ latitude, longitude });
           } catch (error) {
-            console.error("Error saving to Firestore:", error);
-            alert("Failed to save stream data. Please try again.");
+            console.error("Error starting stream:", error);
+            alert("Failed to start stream. Please try again.");
+          } finally {
+            setIsLoading(false);
           }
-
-          setIsLoading(false);
         },
         (error) => {
           console.error("Error getting location:", error);

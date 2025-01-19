@@ -105,7 +105,19 @@ function Map() {
         showUserHeading: true,
       });
 
-      mapRef.current.addControl(geolocateControl);
+      // Make the geolocate button top-most and functional
+      mapRef.current.addControl(geolocateControl, "top-right");
+
+      const geolocateButton = document.querySelector(".mapboxgl-ctrl-geolocate");
+      if (geolocateButton) {
+        geolocateButton.style.zIndex = "1000";
+      }
+
+      geolocateControl.on("geolocate", (e) => {
+        const { longitude, latitude } = e.coords;
+        setUserLocation([longitude, latitude]);
+        mapRef.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+      });
 
       mapRef.current.on("load", () => {
         fetchFireData();
@@ -129,13 +141,13 @@ function Map() {
         },
         (error) => {
           console.error("Error getting user location:", error);
-          initializeMap([userLocation[0] ?? -123.1207, userLocation[1] ?? 49.2827]);
+          initializeMap([userLocation[0] || -123.1207, userLocation[1] || 49.2827]);
         },
         { enableHighAccuracy: true }
       );
     } else {
       console.error("Geolocation is not supported by this browser.");
-      initializeMap([userLocation[0] ?? -123.1207, userLocation[1] ?? 49.2827]);
+      initializeMap([userLocation[0] || -123.1207, userLocation[1] || 49.2827]);
     }
 
     return () => {

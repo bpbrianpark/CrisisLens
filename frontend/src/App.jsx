@@ -13,8 +13,10 @@ export default function App() {
 
   const handleStartStream = async ({ latitude, longitude }) => {
     try {
+      console.log("STARTING STREAM");
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/livepeer/create`);
       const { data } = response.data;
+      console.log("STREAM DATA", data);
       setStreamData(data);
       await addDoc(collection(db, "videos"), {
         userId: null,

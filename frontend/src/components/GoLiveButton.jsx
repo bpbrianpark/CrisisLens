@@ -7,12 +7,14 @@ const GoLiveButton = ({ handleStartStream }) => {
 
   const handleClick = async () => {
     setIsLoading(true);
+    console.debug("BUTTON HERE");
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
 
           try {
+            console.debug("BUTTON PRESSED");
             await handleStartStream({ latitude, longitude });
           } catch (error) {
             console.error("Error starting stream:", error);
@@ -53,7 +55,14 @@ const GoLiveButton = ({ handleStartStream }) => {
   };
 
   return (
-    <button className="record-button" onClick={handleClick} disabled={isLoading}>
+    <button
+      className="record-button"
+      onClick={() => {
+        console.debug("HERE");
+        handleClick();
+      }}
+      disabled={isLoading}
+    >
       Record Now
     </button>
   );

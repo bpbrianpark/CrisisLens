@@ -5,7 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
 export default function StreamPlayer({ selectedCluster }) {
-  const playbackId = selectedCluster.fires[0].playbackId;
+  // const playbackId = selectedCluster.fires[0].playbackId;
+  const playbackId = "14000dstm36cexor";
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
@@ -105,6 +106,18 @@ export default function StreamPlayer({ selectedCluster }) {
         }}
         aria-hidden="true"
       />
+      {/* Translucent Background */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100vh",
+          background: "rgba(0, 0, 0, 0.8)", // Dark translucent background
+          zIndex: 0, // Ensures it's behind the player
+        }}
+      />
       <Player.Root
         src={src}
         onError={(error) => {
@@ -180,12 +193,12 @@ export default function StreamPlayer({ selectedCluster }) {
               style={{
                 position: "absolute",
                 top: "20px",
-                right: "20px",
-                background: "#ff0000",
-                padding: "8px 16px",
-                borderRadius: "20px",
+                left: "20px",
+                background: "#ff4444",
+                padding: "2px 8px",
+                borderRadius: "8px",
                 color: "white",
-                fontSize: "14px",
+                fontSize: "16px",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",

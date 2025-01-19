@@ -317,23 +317,22 @@ function Map() {
             onClick={() => setShowStream(false)}
             style={{
               position: "fixed",
-              top: "20px",
+              top: "105px",
               right: "20px",
-              background: "rgba(0, 0, 0, 0.5)",
+              padding: "4px 8px",
+              background: "#ff4444",
               border: "none",
               color: "white",
-              width: "32px",
-              height: "32px",
-              borderRadius: "50%",
+              borderRadius: "8px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
               zIndex: 100000,
-              fontSize: "18px",
+              fontSize: "14px",
             }}
           >
-            ✕
+            Close
           </button>
           <StreamPlayer selectedCluster={selectedCluster} />
         </div>

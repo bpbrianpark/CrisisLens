@@ -5,6 +5,7 @@ import { db } from "../../firebase/firebase";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import FireMarker from "./FireMarker";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
@@ -13,26 +14,22 @@ function Map() {
   const mapContainerRef = useRef();
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [fireLocations, setFireLocations] = useState([]);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Fetch video data and add markers to the map
-  const addFlameMarkers = async (map) => {
+  const fetchFireLocations = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "videos"));
+      const locations = [];
+
       querySnapshot.forEach((doc) => {
         const { latitude, longitude } = doc.data();
-
-        // Create a flame marker for each document
-        const markerElement = document.createElement("div");
-        markerElement.style.backgroundImage =
-          "url(https://uxwing.com/wp-content/themes/uxwing/download/e-commerce-currency-shopping/flame-icon.png)";
-        markerElement.style.backgroundSize = "contain";
-        markerElement.style.width = "30px";
-        markerElement.style.height = "30px";
-
-        new mapboxgl.Marker(markerElement)
-          .setLngLat([longitude, latitude])
-          .addTo(map);
+        if (latitude && longitude) {
+          locations.push([longitude, latitude]);
+        }
       });
+      console.log(locations);
+      setFireLocations(locations);
     } catch (error) {
       console.error("Error fetching video data:", error);
     }
@@ -96,7 +93,7 @@ function Map() {
         });
       }
 
-      addFlameMarkers(mapRef.current);
+      setMapLoaded(true);
     });
 
     return () => {
@@ -104,10 +101,20 @@ function Map() {
     };
   }, [userLocation]);
 
+  useEffect(() => {
+    if (mapLoaded) {
+      fetchFireLocations();
+    }
+  }, [mapLoaded]);
+
   return (
     <>
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
       {locationError && <div className="sidebar">Location error: {locationError}</div>}
+      {mapLoaded &&
+        fireLocations.map((location) => (
+          <FireMarker key={`${location[0]}-${location[1]}`} map={mapRef.current} location={location} />
+        ))}
     </>
   );
 }

@@ -1,18 +1,34 @@
 import { useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 import "../App.css";
 
 const GoLiveButton = () => {
-  const [userLocation, setUserLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     setIsLoading(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          const location = { latitude, longitude };
-          setUserLocation(location);
+
+          try {
+            await addDoc(collection(db, "videos"), {
+              userId: null,
+              longitude,
+              latitude,
+              videoId: null,
+              startTime: serverTimestamp(),
+              streamKey: null,
+              playbackId: null,
+              category: null,
+            });
+          } catch (error) {
+            console.error("Error saving to Firestore:", error);
+            alert("Failed to save stream data. Please try again.");
+          }
+
           setIsLoading(false);
         },
         (error) => {
@@ -46,11 +62,9 @@ const GoLiveButton = () => {
     }
   };
 
-  console.log(userLocation);
-
   return (
     <button className="record-button" onClick={handleClick} disabled={isLoading}>
-      {isLoading ? "Getting Location..." : "Record Now"}
+      Record Now
     </button>
   );
 };

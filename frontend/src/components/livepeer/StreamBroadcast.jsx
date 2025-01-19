@@ -8,9 +8,7 @@ export default function StreamBroadcast({ streamKey, onClose }) {
   const [timer, setTimer] = useState(0);
 
   useEffect(() => {
-    let intervalId;
-
-    intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       setTimer((prev) => prev + 1);
     }, 1000);
 
@@ -25,30 +23,6 @@ export default function StreamBroadcast({ streamKey, onClose }) {
 
   return (
     <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
-      <div
-        className="absolute top-4 w-full flex flex-row items-center justify-between px-8"
-        style={{ zIndex: 10001 }}
-      >
-        {/* Left: Recording Icon */}
-        <div className="flex items-center gap-2">
-          <div className="bg-red-500 h-2 w-2 rounded-full animate-pulse"></div>
-          <span className="text-sm font-semibold text-white">LIVE</span>
-        </div>
-
-        {/* Center: Timer */}
-        <div className="text-sm font-semibold text-white">
-          {formatTime(timer)}
-        </div>
-
-        {/* Right: Close Button */}
-        <button
-          onClick={onClose}
-          className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded"
-        >
-          Close
-        </button>
-      </div>
-
       {/* Broadcast Video */}
       <Broadcast.Root
         ingestUrl={getIngest(streamKey)}
@@ -61,6 +35,68 @@ export default function StreamBroadcast({ streamKey, onClose }) {
       >
         <Broadcast.Container className="h-full w-full bg-gray-950 relative">
           <Broadcast.Video autoPlay title="Current Livestream" className="h-full w-full object-cover" />
+
+          {/* Overlay: Timer and Close Button */}
+          <div
+            style={{
+              position: "absolute",
+              top: "0px",
+              left: "0",
+              right: "0",
+              zIndex: 10,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "0 20px",
+              background: "#000000",
+              paddingTop: "8px",
+              paddingBottom: "8px",
+            }}
+          >
+            {/* Left: Live */}
+            <span
+              style={{
+                fontWeight: "bold",
+                color: "#ff6b6b",
+                fontSize: "18px",
+              }}
+              className="text-sm font-semibold"
+            >
+              LIVE
+            </span>
+
+            {/* Center: Timer */}
+            <div
+              style={{
+                color: "#ffffff",
+                fontWeight: "bold",
+                fontSize: "18px",
+              }}
+            >
+              {formatTime(timer)}
+            </div>
+
+            {/* Right: Close Button */}
+            <button
+              onClick={onClose}
+              style={{
+                // backgroundColor: "rgba(255, 255, 255, 0.2)",
+                backgroundColor: "#ff6b6b",
+                color: "white",
+                padding: "3px 5px",
+                fontWeight: "bold",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                transition: "background-color 0.3s",
+                fontSize: "18px",
+              }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255, 255, 255, 0.4)")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255, 255, 255, 0.2)")}
+            >
+              End
+            </button>
+          </div>
         </Broadcast.Container>
       </Broadcast.Root>
     </div>

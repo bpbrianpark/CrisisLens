@@ -75,8 +75,37 @@ function Map() {
         mapboxgl: mapboxgl,
         marker: false,
       });
-
-      mapRef.current.addControl(geocoder, "top-left");
+  
+      // Create a custom container for the logo and geocoder
+      const topLeftContainer = document.createElement("div");
+      topLeftContainer.className = "custom-geocoder-container";
+      topLeftContainer.style.display = "flex";
+      topLeftContainer.style.alignItems = "center";
+      topLeftContainer.style.gap = "4px";
+      topLeftContainer.style.paddingLeft = "12px";
+  
+      // Add the logo to the container
+      const logo = document.createElement("img");
+      logo.src = "https://i.imgur.com/soVndGN.png"; // Update with the actual path
+      logo.alt = "CrisisLine Logo";
+      logo.style.width = "40px";
+      logo.style.height = "40px";
+  
+      // Append the logo and geocoder to the container
+      topLeftContainer.appendChild(logo);
+      const geocoderEl = geocoder.onAdd(mapRef.current);
+      topLeftContainer.appendChild(geocoderEl);
+  
+      // Add the container to the top-left of the map
+      const topLeftControlGroup = mapRef.current.getContainer().querySelector(".mapboxgl-ctrl-top-left");
+      if (topLeftControlGroup) {
+        // Remove any existing custom-geocoder-container to avoid duplicates
+        const existingContainer = topLeftControlGroup.querySelector(".custom-geocoder-container");
+        if (existingContainer) {
+          existingContainer.remove();
+        }
+        topLeftControlGroup.appendChild(topLeftContainer);
+      }
 
       const geolocateControl = new mapboxgl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },

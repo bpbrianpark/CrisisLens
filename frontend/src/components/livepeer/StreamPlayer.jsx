@@ -4,7 +4,7 @@ import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
 import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
-export default function StreamPlayer({ selectedCluster }) {
+export default function StreamPlayer({ selectedCluster, onClose }) {
   // const playbackId = selectedCluster.fires[0].playbackId;
   const playbackId = "1667ubzfld6xw4me";
   const [src, setSrc] = useState(null);
@@ -152,6 +152,23 @@ export default function StreamPlayer({ selectedCluster }) {
             onLoadedData={() => console.log("Livestream data loaded")}
             onPlay={() => console.log("Livestream started playing")}
           />
+          <button
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              padding: "4px 8px",
+              background: "#ff4444",
+              border: "none",
+              color: "white",
+              borderRadius: "8px",
+              cursor: "pointer",
+              zIndex: 100000,
+            }}
+          >
+            Close
+          </button>
 
           <Player.Controls
             style={{
@@ -238,3 +255,8 @@ export default function StreamPlayer({ selectedCluster }) {
     </div>
   );
 }
+
+StreamPlayer.propTypes = {
+  selectedCluster: PropTypes.object.isRequired,
+  onClose: PropTypes.func.isRequired,
+};

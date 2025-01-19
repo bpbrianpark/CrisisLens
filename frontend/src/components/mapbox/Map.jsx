@@ -12,6 +12,7 @@ import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
 import * as turf from '@turf/turf';
+import VODPlayer from "../livepeer/VODPlayer";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
@@ -312,7 +313,7 @@ function Map() {
   }, [fireData]);
 
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || fireData.length < 2) return;
+    if (!mapRef.current || !mapLoaded || fireData.length < 1) return;
 
     // Remove existing box layer and source if they exist
     if (mapRef.current.getLayer('bbox-layer')) {
@@ -327,32 +328,86 @@ function Map() {
       fireData.map(fire => turf.point([fire.longitude, fire.latitude]))
     );
 
-    // Calculate the convex hull that contains all points
-    const hull = turf.convex(points);
+    // Check the number of points
+    if (points.features.length === 1) {
+      // If there's only one point, create a circle around it
+      const singleFire = points.features[0];
+      const circle = turf.circle(singleFire.geometry.coordinates, 0.2, {
+        steps: 64,
+        units: 'kilometers'
+      });
 
-    // Add padding around the hull with rounded corners
-    const bufferedHull = turf.buffer(hull, 0.2, { 
-      units: 'kilometers'
-    });
+      // Add the source and layer for the circle
+      mapRef.current.addSource('bbox-source', {
+        'type': 'geojson',
+        'data': circle
+      });
 
-    // Add the source and layer to the map
-    mapRef.current.addSource('bbox-source', {
-      'type': 'geojson',
-      'data': bufferedHull
-    });
+      mapRef.current.addLayer({
+        'id': 'bbox-layer',
+        'type': 'fill',
+        'source': 'bbox-source',
+        'layout': {},
+        'paint': {
+          'fill-color': '#00ff00',
+          'fill-opacity': 0.2,
+          'fill-outline-color': '#008000'
+        }
+      });
+    } else if (points.features.length < 3) {
+      // If fewer than 3 points, create a bounding box
+      const bbox = turf.bbox(points);
+      const bboxPolygon = turf.bboxPolygon(bbox);
 
-    mapRef.current.addLayer({
-      'id': 'bbox-layer',
-      'type': 'fill',
-      'source': 'bbox-source',
-      'layout': {},
-      'paint': {
-        'fill-color': '#00ff00',
-        'fill-opacity': 0.2,
-        'fill-outline-color': '#008000'
-      }
-    });
+      // Add padding around the bounding box with rounded corners
+      const bufferedBox = turf.buffer(bboxPolygon, 0.2, { 
+        units: 'kilometers'
+      });
 
+      // Add the source and layer to the map
+      mapRef.current.addSource('bbox-source', {
+        'type': 'geojson',
+        'data': bufferedBox
+      });
+
+      mapRef.current.addLayer({
+        'id': 'bbox-layer',
+        'type': 'fill',
+        'source': 'bbox-source',
+        'layout': {},
+        'paint': {
+          'fill-color': '#00ff00',
+          'fill-opacity': 0.2,
+          'fill-outline-color': '#008000'
+        }
+      });
+    } else {
+      // Calculate the convex hull that contains all points
+      const hull = turf.convex(points);
+
+      // Add padding around the hull with rounded corners
+      const bufferedHull = turf.buffer(hull, 0.2, { 
+        units: 'kilometers'
+      });
+
+      // Add the source and layer to the map
+      mapRef.current.addSource('bbox-source', {
+        'type': 'geojson',
+        'data': bufferedHull
+      });
+
+      mapRef.current.addLayer({
+        'id': 'bbox-layer',
+        'type': 'fill',
+        'source': 'bbox-source',
+        'layout': {},
+        'paint': {
+          'fill-color': '#00ff00',
+          'fill-opacity': 0.2,
+          'fill-outline-color': '#008000'
+        }
+      });
+    }
   }, [fireData, mapLoaded]);
 
   return (
@@ -368,29 +423,9 @@ function Map() {
             zIndex: 99999,
           }}
         >
-          <button
-            onClick={() => setShowStream(false)}
-            style={{
-              position: "fixed",
-              top: "105px",
-              right: "20px",
-              padding: "4px 8px",
-              background: "#ff4444",
-              border: "none",
-              color: "white",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              zIndex: 100000,
-              fontSize: "14px",
-            }}
-          >
-            Close
-          </button>
           {selectedCluster.fires[0].isLiveStream ? (
-            <StreamPlayer selectedCluster={selectedCluster} />
+          // {selectedCluster.fires[0].isOngoing ? (
+            <StreamPlayer selectedCluster={selectedCluster} onClose={() => setShowStream(false)} />
           ) : (
             <VODPlayer playbackId={selectedCluster.fires[0].playbackId} />
           )}

@@ -6,6 +6,7 @@ import PropTypes from "prop-types";
 import { Livepeer } from "livepeer";
 
 export const getPlaybackSource = async ({ playbackId }) => {
+  console.log("PlaybackId:", playbackId);
   try {
     const livepeer = new Livepeer({ apiKey: import.meta.env.VITE_LIVEPEER_API_KEY });
     const playbackInfo = await livepeer.playback.get(playbackId);
@@ -29,7 +30,8 @@ export default function VODPlayer({ playbackId }) {
       try {
         setLoading(true);
         // Use the getPlaybackSource function
-        const playbackUrl = await getPlaybackSource(playbackId);
+        // const playbackUrl = await getPlaybackSource({playbackId});
+        const playbackUrl = await getPlaybackSource({playbackId: "1667ubzfld6xw4me"});
         console.log("VOD URL:", playbackUrl);
 
         if (playbackUrl) {

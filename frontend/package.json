@@ -13,6 +13,7 @@
     "@livepeer/react": "^4.2.9",
     "@mapbox/mapbox-gl-geocoder": "^5.0.3",
     "axios": "^1.7.9",
+    "firebase": "^11.2.0",
     "livepeer": "^3.5.0",
     "mapbox-gl": "^3.9.3",
     "react": "^18.3.1",

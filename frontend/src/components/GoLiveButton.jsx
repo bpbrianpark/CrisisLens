@@ -1,45 +1,58 @@
 import { useState } from "react";
+import "../App.css";
 
-export default function GoLiveButton() {
+const GoLiveButton = () => {
   const [userLocation, setUserLocation] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  console.log(userLocation);
-
-  const handleGetLocation = () => {
-    if (navigator.geolocation) {
+  const handleClick = () => {
+    setIsLoading(true);
+    if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setUserLocation([longitude, latitude]);
+          const location = { latitude, longitude };
+          setUserLocation(location);
+          setIsLoading(false);
         },
         (error) => {
           console.error("Error getting location:", error);
-          alert("Unable to retrieve location. Please enable location access.");
+          let errorMessage = "Error getting location: ";
+          switch (error.code) {
+            case error.TIMEOUT:
+              errorMessage += "Request timed out. Please try again.";
+              break;
+            case error.PERMISSION_DENIED:
+              errorMessage += "Please enable location permissions.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage += "Location information unavailable.";
+              break;
+            default:
+              errorMessage += error.message;
+          }
+          alert(errorMessage);
+          setIsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
     } else {
-      alert("Geolocation is not supported by your browser.");
+      alert("Geolocation is not supported by this browser.");
+      setIsLoading(false);
     }
   };
 
+  console.log(userLocation);
+
   return (
-    <button
-      onClick={handleGetLocation}
-      style={{
-        position: "absolute",
-        top: "20px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        padding: "10px 20px",
-        backgroundColor: "#007BFF",
-        color: "#fff",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer",
-        zIndex: 1000,
-      }}
-    >
-      Start Stream
+    <button className="record-button" onClick={handleClick} disabled={isLoading}>
+      {isLoading ? "Getting Location..." : "Record Now"}
     </button>
   );
-}
+};
+
+export default GoLiveButton;

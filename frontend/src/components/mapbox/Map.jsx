@@ -4,8 +4,7 @@ import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-mapboxgl.accessToken =
-  "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
+mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
 function Map() {
   const mapRef = useRef();
@@ -44,7 +43,7 @@ function Map() {
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/navigation-night-v1",
       center: userLocation || [-123.1207, 49.2827],
-      zoom: 11,
+      zoom: 14,
     });
 
     const geocoder = new MapboxGeocoder({
@@ -76,15 +75,9 @@ function Map() {
     markerElement.style.width = "30px";
     markerElement.style.height = "30px";
 
-    const marker = new mapboxgl.Marker(markerElement)
-      .setLngLat(fixedLocation)
-      .addTo(mapRef.current);
+    const marker = new mapboxgl.Marker(markerElement).setLngLat(fixedLocation).addTo(mapRef.current);
 
-    marker.setPopup(popup);
     marker.getElement().style.cursor = "pointer";
-    marker.getElement().addEventListener("click", () => {
-      popup.addTo(mapRef.current);
-    });
 
     mapRef.current.on("load", () => {
       if (userLocation) {
@@ -103,9 +96,7 @@ function Map() {
   return (
     <>
       <div id="map-container" ref={mapContainerRef} />
-      {locationError && (
-        <div className="sidebar">Location error: {locationError}</div>
-      )}
+      {locationError && <div className="sidebar">Location error: {locationError}</div>}
     </>
   );
 }

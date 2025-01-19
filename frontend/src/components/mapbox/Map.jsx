@@ -28,7 +28,7 @@ function Map() {
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000,
           maximumAge: 0,
         }
       );
@@ -80,10 +80,6 @@ function Map() {
       .setLngLat(fixedLocation)
       .addTo(mapRef.current);
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setText(
-      "This is a generic popup message."
-    );
-
     marker.setPopup(popup);
     marker.getElement().style.cursor = "pointer";
     marker.getElement().addEventListener("click", () => {
@@ -91,48 +87,6 @@ function Map() {
     });
 
     mapRef.current.on("load", () => {
-      // Define Vancouver disaster zone
-      const vancouverDisasterZone = {
-        type: "Feature",
-        geometry: {
-          type: "Polygon",
-          coordinates: [
-            [
-              [-123.14, 49.29],
-              [-123.14, 49.26],
-              [-123.1, 49.26],
-              [-123.1, 49.29],
-              [-123.14, 49.29],
-            ],
-          ],
-        },
-      };
-
-      mapRef.current.addSource("vancouver-disaster-area", {
-        type: "geojson",
-        data: vancouverDisasterZone,
-      });
-
-      mapRef.current.addLayer({
-        id: "disaster-layer",
-        type: "fill",
-        source: "vancouver-disaster-area",
-        paint: {
-          "fill-color": "#FF0000",
-          "fill-opacity": 0.4,
-        },
-      });
-
-      mapRef.current.addLayer({
-        id: "disaster-outline",
-        type: "line",
-        source: "vancouver-disaster-area",
-        paint: {
-          "line-color": "#FF0000",
-          "line-width": 2,
-        },
-      });
-
       if (userLocation) {
         mapRef.current.flyTo({
           center: userLocation,

@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 
 export default function StreamPlayer({ selectedCluster }) {
   // const playbackId = selectedCluster.fires[0].playbackId;
-  const playbackId = "14000dstm36cexor";
+  const playbackId = "1667ubzfld6xw4me";
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);

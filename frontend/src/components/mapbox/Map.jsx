@@ -11,6 +11,7 @@ import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
+import * as turf from '@turf/turf';
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
@@ -32,6 +33,7 @@ function Map() {
   const [newsArticlesForLocation, setNewsArticlesForLocation] = useState({});
   const [selectedNews, setSelectedNews] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hullPolygon, setHullPolygon] = useState(null);
 
   const openModal = (news) => {
     setSelectedNews(news);
@@ -97,6 +99,7 @@ function Map() {
 
       mapRef.current.on("load", () => {
         fetchFireData();
+        setMapLoaded(true);
       });
 
       let debounceTimeout = null;
@@ -106,7 +109,6 @@ function Map() {
           updateClusters();
         }, 300);
       });
-      setMapLoaded(true);
     };
 
     if ("geolocation" in navigator) {
@@ -135,9 +137,18 @@ function Map() {
   }, []);
 
   useEffect(() => {
-    if (mapLoaded) {
+    if (!mapLoaded) return;
+
+    // Initial fetch
+    fetchFireData();
+
+    // Set up polling every 5 seconds
+    const intervalId = setInterval(() => {
       fetchFireData();
-    }
+    }, 5000);
+
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
   }, [mapLoaded]);
 
   const clusterFires = (locations, zoom) => {
@@ -299,6 +310,50 @@ function Map() {
       updateClusters();
     }
   }, [fireData]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded || fireData.length < 2) return;
+
+    // Remove existing box layer and source if they exist
+    if (mapRef.current.getLayer('bbox-layer')) {
+      mapRef.current.removeLayer('bbox-layer');
+    }
+    if (mapRef.current.getSource('bbox-source')) {
+      mapRef.current.removeSource('bbox-source');
+    }
+
+    // Create a Feature Collection from fire points
+    const points = turf.featureCollection(
+      fireData.map(fire => turf.point([fire.longitude, fire.latitude]))
+    );
+
+    // Calculate the convex hull that contains all points
+    const hull = turf.convex(points);
+
+    // Add padding around the hull with rounded corners
+    const bufferedHull = turf.buffer(hull, 0.2, { 
+      units: 'kilometers'
+    });
+
+    // Add the source and layer to the map
+    mapRef.current.addSource('bbox-source', {
+      'type': 'geojson',
+      'data': bufferedHull
+    });
+
+    mapRef.current.addLayer({
+      'id': 'bbox-layer',
+      'type': 'fill',
+      'source': 'bbox-source',
+      'layout': {},
+      'paint': {
+        'fill-color': '#00ff00',
+        'fill-opacity': 0.2,
+        'fill-outline-color': '#008000'
+      }
+    });
+
+  }, [fireData, mapLoaded]);
 
   return (
     <>

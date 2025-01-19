@@ -66,8 +66,8 @@ export default function StreamPlayer({ playbackId }) {
             top: 0,
             left: 0,
             width: '100vw',
-            height: '100vh',
-            background: 'black',
+            height: '100vw',
+            background: 'transparent',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
@@ -121,12 +121,11 @@ export default function StreamPlayer({ playbackId }) {
                     <Player.Video 
                         title="Livestream" 
                         style={{
-                            width: 'auto',
-                            height: '100%',
-                            maxWidth: '100%',
-                            maxHeight: '100vh',
-                            objectFit: 'contain',
-                            margin: 'auto'
+                            width: '100vw',
+                            height: '80vh',
+                            maxWidth: 'none',
+                            maxHeight: 'none',
+                            objectFit: 'cover'
                         }}
                         autoPlay
                         muted

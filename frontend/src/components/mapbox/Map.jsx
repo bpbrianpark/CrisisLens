@@ -4,8 +4,7 @@ import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-mapboxgl.accessToken =
-  "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
+mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
 function Map() {
   const mapRef = useRef();
@@ -28,7 +27,7 @@ function Map() {
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000,
           maximumAge: 0,
         }
       );
@@ -76,13 +75,9 @@ function Map() {
     markerElement.style.width = "30px";
     markerElement.style.height = "30px";
 
-    const marker = new mapboxgl.Marker(markerElement)
-      .setLngLat(fixedLocation)
-      .addTo(mapRef.current);
+    const marker = new mapboxgl.Marker(markerElement).setLngLat(fixedLocation).addTo(mapRef.current);
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setText(
-      "This is a generic popup message."
-    );
+    const popup = new mapboxgl.Popup({ offset: 25 }).setText("This is a generic popup message.");
 
     marker.setPopup(popup);
     marker.getElement().style.cursor = "pointer";
@@ -149,9 +144,7 @@ function Map() {
   return (
     <>
       <div id="map-container" ref={mapContainerRef} />
-      {locationError && (
-        <div className="sidebar">Location error: {locationError}</div>
-      )}
+      {locationError && <div className="sidebar">Location error: {locationError}</div>}
     </>
   );
 }

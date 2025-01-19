@@ -12,109 +12,162 @@ mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhye
 function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();
+  const [fireClusters, setFireClusters] = useState([]);
+  const [fireData, setFireData] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
-  const [locationError, setLocationError] = useState(null);
-  const [fireLocations, setFireLocations] = useState([]);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const isFetching = useRef(false);
 
-  const fetchFireLocations = async () => {
+  const fetchFireData = async () => {
+    if (isFetching.current) return;
+
+    isFetching.current = true;
     try {
       const querySnapshot = await getDocs(collection(db, "videos"));
-      const locations = [];
-
-      querySnapshot.forEach((doc) => {
-        const { latitude, longitude } = doc.data();
-        if (latitude && longitude) {
-          locations.push([longitude, latitude]);
-        }
-      });
-      console.log(locations);
-      setFireLocations(locations);
+      const fires = querySnapshot.docs.map((doc) => ({
+        longitude: doc.data().longitude,
+        latitude: doc.data().latitude,
+        ...doc.data(),
+      }));
+      setFireData(fires);
     } catch (error) {
-      console.error("Error fetching video data:", error);
+      console.error("Error fetching fire data:", error);
+    } finally {
+      isFetching.current = false;
     }
   };
 
+  const clusterFires = (locations, zoom) => {
+    const zoomFactor = 0.01 / Math.pow(2, zoom - 10);
+    const clusters = [];
+
+    locations.forEach((location) => {
+      let added = false;
+      for (const cluster of clusters) {
+        const [lng, lat] = cluster.center;
+        const distance = Math.sqrt(Math.pow(lng - location.longitude, 2) + Math.pow(lat - location.latitude, 2));
+
+        if (distance <= zoomFactor) {
+          cluster.fires.push(location);
+          cluster.center = [
+            (lng * cluster.fires.length + location.longitude) / (cluster.fires.length + 1),
+            (lat * cluster.fires.length + location.latitude) / (cluster.fires.length + 1),
+          ];
+          added = true;
+          break;
+        }
+      }
+
+      if (!added) {
+        clusters.push({
+          center: [location.longitude, location.latitude],
+          fires: [location],
+        });
+      }
+    });
+
+    return clusters;
+  };
+
+  const updateClusters = () => {
+    if (!mapRef.current) return;
+
+    if (fireData.length === 0) {
+      fetchFireData();
+    }
+
+    if (fireData.length === 0) return;
+
+    const zoom = mapRef.current.getZoom();
+    const clusters = clusterFires(fireData, zoom);
+    setFireClusters(clusters);
+  };
+
   useEffect(() => {
+    const initializeMap = (center) => {
+      mapRef.current = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/mapbox/navigation-night-v1",
+        center,
+        zoom: 11,
+      });
+
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: false,
+      });
+
+      mapRef.current.addControl(geocoder, "top-left");
+
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true,
+      });
+
+      mapRef.current.addControl(geolocateControl);
+
+      mapRef.current.on("load", () => {
+        fetchFireData();
+      });
+
+      let debounceTimeout = null;
+      mapRef.current.on("moveend", () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          updateClusters();
+        }, 300);
+      });
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation([longitude, latitude]);
+          initializeMap([longitude, latitude]);
         },
         (error) => {
-          console.error("Error getting location:", error);
-          setLocationError(error.message);
+          console.error("Error getting user location:", error);
+          initializeMap([userLocation[0] ?? -123.1207, userLocation[1] ?? 49.2827]);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
+        { enableHighAccuracy: true }
       );
     } else {
-      setLocationError("Geolocation is not supported by this browser.");
+      console.error("Geolocation is not supported by this browser.");
+      initializeMap([userLocation[0] ?? -123.1207, userLocation[1] ?? 49.2827]);
     }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+      }
+    };
   }, []);
 
   useEffect(() => {
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/navigation-night-v1",
-      center: userLocation || [-123.1207, 49.2827],
-      zoom: 14,
-    });
-
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      marker: true,
-      placeholder: "Search for places",
-      proximity: userLocation,
-    });
-
-    mapRef.current.addControl(geocoder, "top-left");
-
-    const geolocateControl = new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      trackUserLocation: true,
-      showUserHeading: true,
-    });
-
-    mapRef.current.addControl(geolocateControl);
-
-    mapRef.current.on("load", () => {
-      if (userLocation) {
-        mapRef.current.flyTo({
-          center: userLocation,
-          zoom: 11,
-        });
-      }
-
-      setMapLoaded(true);
-    });
-
-    return () => {
-      mapRef.current?.remove();
-    };
-  }, [userLocation]);
-
-  useEffect(() => {
-    if (mapLoaded) {
-      fetchFireLocations();
+    if (fireData.length > 0) {
+      updateClusters();
     }
-  }, [mapLoaded]);
+  }, [fireData]);
+
+  const handleMarkerClick = (fires) => {
+    alert(`This cluster contains ${fires.length} fires:\n${fires.map((f) => f.videoId).join(", ")}`);
+  };
 
   return (
     <>
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
-      {locationError && <div className="sidebar">Location error: {locationError}</div>}
-      {mapLoaded &&
-        fireLocations.map((location) => (
-          <FireMarker key={`${location[0]}-${location[1]}`} map={mapRef.current} location={location} />
-        ))}
+      {fireClusters.map((cluster, index) => (
+        <FireMarker
+          key={index}
+          map={mapRef.current}
+          location={cluster.center}
+          count={cluster.fires.length}
+          fires={cluster.fires}
+          onClick={handleMarkerClick}
+        />
+      ))}
     </>
   );
 }

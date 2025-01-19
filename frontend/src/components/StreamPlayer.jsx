@@ -1,15 +1,12 @@
 import * as Player from "@livepeer/react/player";
 import { getSrc } from "@livepeer/react/external";
 import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
-import { useState, useEffect, useRef } from "react";
-import PropTypes from 'prop-types';
+import { useState, useEffect } from "react";
 
 export default function StreamPlayer({ playbackId }) {
     const [src, setSrc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [videoError, setVideoError] = useState(null);
-    const mediaElementRef = useRef(null);
-    const autoPlayButtonRef = useRef(null);
 
     useEffect(() => {
         try {
@@ -39,23 +36,6 @@ export default function StreamPlayer({ playbackId }) {
         }
     }, [playbackId]);
 
-    useEffect(() => {
-        if (autoPlayButtonRef.current) {
-            const clickAutoPlayButton = () => {
-                console.log("Clicking auto-play button");
-                autoPlayButtonRef.current.click();
-            };
-
-            // Click immediately
-            clickAutoPlayButton();
-
-            // Click again after a short delay to ensure it works
-            const timeoutId = setTimeout(clickAutoPlayButton, 100);
-
-            return () => clearTimeout(timeoutId);
-        }
-    }, [src]);
-
     if (loading) return <p>Loading player...</p>;
     if (!src) return (
         <div className="p-4 bg-red-100 text-red-700 rounded">
@@ -66,36 +46,6 @@ export default function StreamPlayer({ playbackId }) {
 
     return (
         <div className="flex flex-col gap-2">
-            <button
-                ref={autoPlayButtonRef}
-                onClick={() => {
-                    const playButton = document.querySelector('[aria-label="Play"]');
-                    if (playButton) {
-                        playButton.click();
-                    }
-                    if (mediaElementRef.current) {
-                        mediaElementRef.current.play().catch(err => 
-                            console.error("Failed to play:", err)
-                        );
-                    }
-                }}
-                style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '1px',
-                    height: '1px',
-                    padding: 0,
-                    margin: '-1px',
-                    overflow: 'hidden',
-                    clip: 'rect(0, 0, 0, 0)',
-                    whiteSpace: 'nowrap',
-                    border: 0,
-                    opacity: 0,
-                    pointerEvents: 'none'
-                }}
-                aria-hidden="true"
-            />
             <Player.Root 
                 src={src}
                 onError={(error) => {
@@ -111,7 +61,6 @@ export default function StreamPlayer({ playbackId }) {
                         onLoadStart={() => console.log("Livestream loading started")}
                         onLoadedData={() => console.log("Livestream data loaded")}
                         onPlay={() => console.log("Livestream started playing")}
-                        ref={mediaElementRef}
                     />
 
                     <Player.Controls className="flex items-center justify-center">
@@ -150,7 +99,3 @@ export default function StreamPlayer({ playbackId }) {
         </div>
     );
 } 
-
-StreamPlayer.propTypes = {
-    playbackId: PropTypes.string.isRequired
-}; 

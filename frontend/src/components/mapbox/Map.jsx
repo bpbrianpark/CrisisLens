@@ -3,6 +3,10 @@ import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import StreamPlayer from "../livepeer/StreamPlayer";
+import ReactDOM from 'react-dom';
+
+const PLAYBACK_ID = "14000dstm36cexor";
 
 mapboxgl.accessToken =
   "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
@@ -10,8 +14,11 @@ mapboxgl.accessToken =
 function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();
+  const markerRef = useRef(null);
+  const popupRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [showStream, setShowStream] = useState(false);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -76,18 +83,42 @@ function Map() {
     markerElement.style.width = "30px";
     markerElement.style.height = "30px";
 
-    const marker = new mapboxgl.Marker(markerElement)
+    markerRef.current = new mapboxgl.Marker(markerElement)
       .setLngLat(fixedLocation)
       .addTo(mapRef.current);
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setText(
-      "This is a generic popup message."
-    );
+    popupRef.current = new mapboxgl.Popup({ 
+      offset: 25, 
+      maxWidth: '400px',
+      closeOnClick: false
+    });
 
-    marker.setPopup(popup);
-    marker.getElement().style.cursor = "pointer";
-    marker.getElement().addEventListener("click", () => {
-      popup.addTo(mapRef.current);
+    const updatePopupContent = () => {
+      popupRef.current.setHTML(`
+        <div style="min-width: 320px;">
+          <h3 style="margin-bottom: 10px;">Live Emergency Stream</h3>
+          <div id="stream-container"></div>
+        </div>
+      `);
+    };
+
+    markerRef.current.getElement().style.cursor = "pointer";
+    markerRef.current.getElement().addEventListener("click", () => {
+      setShowStream(true);
+      updatePopupContent();
+      popupRef.current.setLngLat(fixedLocation).addTo(mapRef.current);
+    });
+
+    popupRef.current.on('close', () => {
+      setShowStream(false);
+    });
+
+    popupRef.current.on('open', () => {
+      const container = document.getElementById('stream-container');
+      if (container && showStream) {
+        const playbackId = PLAYBACK_ID;
+        ReactDOM.render(<StreamPlayer playbackId={playbackId} />, container);
+      }
     });
 
     mapRef.current.on("load", () => {
@@ -142,9 +173,21 @@ function Map() {
     });
 
     return () => {
+      if (popupRef.current) popupRef.current.remove();
+      if (markerRef.current) markerRef.current.remove();
       mapRef.current?.remove();
     };
   }, [userLocation]);
+
+  useEffect(() => {
+    if (showStream && popupRef.current) {
+      const container = document.getElementById('stream-container');
+      if (container) {
+        const playbackId = PLAYBACK_ID;
+        ReactDOM.render(<StreamPlayer playbackId={playbackId} />, container);
+      }
+    }
+  }, [showStream]);
 
   return (
     <>

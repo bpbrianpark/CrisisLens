@@ -338,73 +338,87 @@ function Map() {
       });
 
       // Add the source and layer for the circle
-      mapRef.current.addSource('bbox-source', {
-        'type': 'geojson',
-        'data': circle
-      });
+      if (!mapRef.current.getSource('bbox-source')) {
+        mapRef.current.addSource('bbox-source', {
+          'type': 'geojson',
+          'data': circle
+        });
+      } else {
+        mapRef.current.getSource('bbox-source').setData(circle);
+      }
 
-      mapRef.current.addLayer({
-        'id': 'bbox-layer',
-        'type': 'fill',
-        'source': 'bbox-source',
-        'layout': {},
-        'paint': {
-          'fill-color': '#00ff00',
-          'fill-opacity': 0.2,
-          'fill-outline-color': '#008000'
-        }
-      });
-    } else if (points.features.length < 3) {
-      // If fewer than 3 points, create a bounding box
-      const bbox = turf.bbox(points);
-      const bboxPolygon = turf.bboxPolygon(bbox);
-
-      // Add padding around the bounding box with rounded corners
-      const bufferedBox = turf.buffer(bboxPolygon, 0.2, { 
-        units: 'kilometers'
-      });
-
-      // Add the source and layer to the map
-      mapRef.current.addSource('bbox-source', {
-        'type': 'geojson',
-        'data': bufferedBox
-      });
-
-      mapRef.current.addLayer({
-        'id': 'bbox-layer',
-        'type': 'fill',
-        'source': 'bbox-source',
-        'layout': {},
-        'paint': {
-          'fill-color': '#00ff00',
-          'fill-opacity': 0.2,
-          'fill-outline-color': '#008000'
-        }
-      });
+      if (!mapRef.current.getLayer('bbox-layer')) {
+        mapRef.current.addLayer({
+          'id': 'bbox-layer',
+          'type': 'fill',
+          'source': 'bbox-source',
+          'layout': {},
+          'paint': {
+            'fill-color': '#00ff00',
+            'fill-opacity': 0.2,
+            'fill-outline-color': '#008000'
+          }
+        });
+      }
     } else {
-      // Calculate the convex hull that contains all points
-      const hull = turf.convex(points);
-
-      // Add padding around the hull with rounded corners
-      const bufferedHull = turf.buffer(hull, 0.2, { 
-        units: 'kilometers'
+      // Group points into clusters based on distance
+      const clusters = [];
+      points.features.forEach(point => {
+        let addedToCluster = false;
+        for (const cluster of clusters) {
+          const distance = turf.distance(cluster[0].geometry.coordinates, point.geometry.coordinates, { units: 'kilometers' });
+          if (distance <= 3) {
+            cluster.push(point);
+            addedToCluster = true;
+            break;
+          }
+        }
+        if (!addedToCluster) {
+          clusters.push([point]);
+        }
       });
 
-      // Add the source and layer to the map
-      mapRef.current.addSource('bbox-source', {
-        'type': 'geojson',
-        'data': bufferedHull
-      });
+      // Process each cluster
+      clusters.forEach((cluster, index) => {
+        let geometry;
+        if (cluster.length === 1) {
+          // Create a circle for a single point cluster
+          geometry = turf.circle(cluster[0].geometry.coordinates, 0.2, {
+            steps: 64,
+            units: 'kilometers'
+          });
+        } else {
+          // Calculate the convex hull for multiple points
+          const clusterPoints = turf.featureCollection(cluster);
+          const hull = turf.convex(clusterPoints);
+          geometry = turf.buffer(hull, 0.2, { units: 'kilometers' });
+        }
 
-      mapRef.current.addLayer({
-        'id': 'bbox-layer',
-        'type': 'fill',
-        'source': 'bbox-source',
-        'layout': {},
-        'paint': {
-          'fill-color': '#00ff00',
-          'fill-opacity': 0.2,
-          'fill-outline-color': '#008000'
+        // Add the source and layer to the map for each cluster
+        const sourceId = `bbox-source-${index}`;
+        const layerId = `bbox-layer-${index}`;
+
+        if (!mapRef.current.getSource(sourceId)) {
+          mapRef.current.addSource(sourceId, {
+            'type': 'geojson',
+            'data': geometry
+          });
+        } else {
+          mapRef.current.getSource(sourceId).setData(geometry);
+        }
+
+        if (!mapRef.current.getLayer(layerId)) {
+          mapRef.current.addLayer({
+            'id': layerId,
+            'type': 'fill',
+            'source': sourceId,
+            'layout': {},
+            'paint': {
+              'fill-color': '#00ff00',
+              'fill-opacity': 0.2,
+              'fill-outline-color': '#008000'
+            }
+          });
         }
       });
     }

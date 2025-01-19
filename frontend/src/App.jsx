@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import StreamBroadcast from "./components/livepeer/StreamBroadcast";
+import Map from "./components/Map";
 
 export default function App() {
   const [streamData, setStreamData] = useState(null);
@@ -34,6 +35,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
+      <Map />
       <button
         onClick={startStream}
         disabled={loading || streamData !== null}

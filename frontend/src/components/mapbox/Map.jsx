@@ -13,16 +13,15 @@ import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
-const PLAYBACK_ID = "";
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 
 function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();
-  const markerRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
   const [showStream, setShowStream] = useState(false);
+  const [selectedCluster, setSelectedCluster] = useState(null);
   const [fireClusters, setFireClusters] = useState([]);
   const [fireData, setFireData] = useState([]);
   const [fireLocations, setFireLocations] = useState([]);
@@ -336,7 +335,7 @@ function Map() {
           >
             ✕
           </button>
-          <StreamPlayer playbackId={PLAYBACK_ID} />
+          <StreamPlayer selectedCluster={selectedCluster} />
         </div>
       )}
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
@@ -348,7 +347,11 @@ function Map() {
             location={cluster.center}
             count={cluster.fires.length}
             fires={cluster.fires}
-            onClick={(fires) => alert(`This cluster contains ${fires.length} fires:\n${fires.join(", ")}`)}
+            onClick={() => {
+              setSelectedCluster(cluster);
+              console.log(cluster);
+              setShowStream(true);
+            }}
           />
         ))}
       {mapLoaded &&

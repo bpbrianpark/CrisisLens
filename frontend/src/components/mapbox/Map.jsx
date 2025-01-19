@@ -6,12 +6,11 @@ import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import StreamPlayer from "../livepeer/StreamPlayer";
-import ReactDOM from 'react-dom';
+import ReactDOM from "react-dom";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
-
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 const PLAYBACK_ID = "";
@@ -180,7 +179,7 @@ function Map() {
     if (fireData.length === 0) {
       fetchFireData();
     }
-    
+
     if (fireData.length === 0) return;
 
     const zoom = mapRef.current.getZoom();
@@ -283,8 +282,6 @@ function Map() {
       return [];
     }
   };
-  
-  
 
   useEffect(() => {
     if (locationKeywords.size > 0) {
@@ -306,37 +303,35 @@ function Map() {
 
   return (
     <>
-      <div id="map-container" ref={mapContainerRef} />
-      {locationError && (
-        <div className="sidebar">Location error: {locationError}</div>
-      )}
       {showStream && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 99999
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 99999,
+          }}
+        >
           <button
             onClick={() => setShowStream(false)}
             style={{
-              position: 'fixed',
-              top: '20px',
-              right: '20px',
-              background: 'rgba(0, 0, 0, 0.5)',
-              border: 'none',
-              color: 'white',
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              background: "rgba(0, 0, 0, 0.5)",
+              border: "none",
+              color: "white",
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
               zIndex: 100000,
-              fontSize: '18px'
+              fontSize: "18px",
             }}
           >
             ✕
@@ -344,10 +339,6 @@ function Map() {
           <StreamPlayer playbackId={PLAYBACK_ID} />
         </div>
       )}
-    
-
-  return (
-    <>
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
       {mapLoaded &&
         fireClusters.map((cluster, index) => (

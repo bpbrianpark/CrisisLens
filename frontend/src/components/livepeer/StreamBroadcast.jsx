@@ -27,6 +27,7 @@ export default function StreamBroadcast({ streamKey, onClose }) {
       <Broadcast.Root
         ingestUrl={getIngest(streamKey)}
         forceEnabled={true}
+        audio={false}
         onError={(error) =>
           error?.type === "permissions"
             ? toast.error("You must accept permissions to broadcast. Please try again.")
@@ -34,7 +35,12 @@ export default function StreamBroadcast({ streamKey, onClose }) {
         }
       >
         <Broadcast.Container className="h-full w-full bg-gray-950 relative">
-          <Broadcast.Video autoPlay title="Current Livestream" className="h-full w-full object-cover" />
+          <Broadcast.Video
+            playsInline
+            muted
+            title="Current Livestream"
+            className="h-full w-full object-cover"
+          />
 
           {/* Overlay: Timer and Close Button */}
           <div

@@ -99,7 +99,7 @@
   height: 100vh;
   width: auto;
   min-width: 100vw;
-  transform: translateX(0);
+  transform: translateX(50px);
   object-fit: cover;
 }
 

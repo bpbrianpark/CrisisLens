@@ -389,7 +389,11 @@ function Map() {
           >
             Close
           </button>
-          <StreamPlayer selectedCluster={selectedCluster} />
+          {selectedCluster.fires[0].isLiveStream ? (
+            <StreamPlayer selectedCluster={selectedCluster} />
+          ) : (
+            <VODPlayer playbackId={selectedCluster.fires[0].playbackId} />
+          )}
         </div>
       )}
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />

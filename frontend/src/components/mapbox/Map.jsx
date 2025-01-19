@@ -5,20 +5,26 @@ import { db } from "../../firebase/firebase";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import StreamPlayer from "../livepeer/StreamPlayer";
+import ReactDOM from "react-dom";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
+const PLAYBACK_ID = "";
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 
 function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();
+  const markerRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [locationError, setLocationError] = useState(null);
+  const [showStream, setShowStream] = useState(false);
+  const [fireClusters, setFireClusters] = useState([]);
+  const [fireData, setFireData] = useState([]);
   const [fireLocations, setFireLocations] = useState([]);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [newsLoaded, setNewsLoaded] = useState(false);
@@ -38,39 +44,147 @@ function Map() {
     setIsModalOpen(false);
   };
 
-  const fetchFireLocations = async () => {
+  const fetchFireData = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "videos"));
-      const locations = [];
-
-      querySnapshot.forEach((doc) => {
-        const { latitude, longitude } = doc.data();
-        if (latitude && longitude) {
-          locations.push([longitude, latitude]);
-        }
-      });
-      console.log(locations);
-      setFireLocations(locations);
+      const fires = querySnapshot.docs.map((doc) => ({
+        longitude: doc.data().longitude,
+        latitude: doc.data().latitude,
+        ...doc.data(),
+      }));
+      setFireData(fires);
+      setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
     } catch (error) {
-      console.error("Error fetching video data:", error);
+      console.error("Error fetching fire data:", error);
     }
   };
 
-  const getLocationName = async (longitude, latitude) => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=neighborhood,locality,place&access_token=${mapboxgl.accessToken}`
+  useEffect(() => {
+    const initializeMap = (center) => {
+      mapRef.current = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/mapbox/navigation-night-v1",
+        center,
+        zoom: 11,
+      });
+
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: false,
+      });
+
+      mapRef.current.addControl(geocoder, "top-left");
+
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true,
+      });
+
+      // Make the geolocate button top-most and functional
+      mapRef.current.addControl(geolocateControl, "top-right");
+
+      const geolocateButton = document.querySelector(".mapboxgl-ctrl-geolocate");
+      if (geolocateButton) {
+        geolocateButton.style.zIndex = "1000";
+      }
+
+      geolocateControl.on("geolocate", (e) => {
+        const { longitude, latitude } = e.coords;
+        setUserLocation([longitude, latitude]);
+        mapRef.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+      });
+
+      mapRef.current.on("load", () => {
+        fetchFireData();
+      });
+
+      let debounceTimeout = null;
+      mapRef.current.on("moveend", () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          updateClusters();
+        }, 300);
+      });
+      setMapLoaded(true);
+    };
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation([longitude, latitude]);
+          initializeMap([longitude, latitude]);
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+          initializeMap([userLocation[0] || -123.1207, userLocation[1] || 49.2827]);
+        },
+        { enableHighAccuracy: true }
       );
-      const data = await response.json();
-
-      const features = data.features || [];
-      const locationNames = features.map((feature) => feature.text).filter(Boolean);
-
-      return locationNames;
-    } catch (error) {
-      console.error("Error fetching location name:", error);
-      return [];
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+      initializeMap([userLocation[0] || -123.1207, userLocation[1] || 49.2827]);
     }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mapLoaded) {
+      fetchFireData();
+    }
+  }, [mapLoaded]);
+
+  const clusterFires = (locations, zoom) => {
+    const zoomFactor = 0.01 / Math.pow(2, zoom - 10);
+    const clusters = [];
+
+    locations.forEach((location) => {
+      let added = false;
+      for (const cluster of clusters) {
+        const [lng, lat] = cluster.center;
+        const distance = Math.sqrt(Math.pow(lng - location.longitude, 2) + Math.pow(lat - location.latitude, 2));
+
+        if (distance <= zoomFactor) {
+          cluster.fires.push(location);
+          cluster.center = [
+            (lng * cluster.fires.length + location.longitude) / (cluster.fires.length + 1),
+            (lat * cluster.fires.length + location.latitude) / (cluster.fires.length + 1),
+          ];
+          added = true;
+          break;
+        }
+      }
+
+      if (!added) {
+        clusters.push({
+          center: [location.longitude, location.latitude],
+          fires: [location],
+        });
+      }
+    });
+
+    return clusters;
+  };
+
+  const updateClusters = () => {
+    if (!mapRef.current) return;
+
+    if (fireData.length === 0) {
+      fetchFireData();
+    }
+
+    if (fireData.length === 0) return;
+
+    const zoom = mapRef.current.getZoom();
+    const clusters = clusterFires(fireData, zoom);
+    setFireClusters(clusters);
   };
 
   const updateLocationKeywords = async () => {
@@ -84,33 +198,59 @@ function Map() {
     }
 
     setLocationKeywords(newKeywords);
-    console.log("Location Keywords:", Array.from(newKeywords));
   };
 
-  const fetchNewsForLocation = async (location) => {
+  const getLocationName = async (longitude, latitude) => {
     try {
-      const query = encodeURIComponent(`${location} + (fire OR wildfire OR burning)`);
-      // const response = await fetch(
-      //   `https://api.thenewsapi.com/v1/news/all?` +
-      //     `api_token=${NEWS_API_KEY}&` +
-      //     `search=${query}&` +
-      //     `limit=3&` +
-      //     `sort=published_at`
-      // );
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=neighborhood,locality,place&access_token=${mapboxgl.accessToken}`
+      );
+      const data = await response.json();
 
-      // const data = await response.json();
-      // console.log(`News articles for ${location}:`, data);
-      // return data.data || [];
-      // return response.data || [];
-
-      if (location == "Vancouver") {
-        return newsData.Vancouver.data;
-      } else {
-        return newsData.UBC.data;
-      }
+      return data.features.map((feature) => feature.text) || [];
     } catch (error) {
-      console.error(`Error fetching news for ${location}:`, error);
+      console.error("Error fetching location name:", error);
       return [];
+    }
+  };
+
+  useEffect(() => {
+    if (fireLocations.length > 0) {
+      updateLocationKeywords();
+    }
+  }, [fireLocations]);
+
+  const updateNewsLocations = async () => {
+    if (!locationKeywords.size) return;
+
+    const locationsMap = {};
+
+    for (const locationName of locationKeywords) {
+      const coordinates = await getCoordinatesForLocation(locationName);
+      if (coordinates) {
+        locationsMap[locationName] = coordinates;
+      }
+    }
+
+    setNewsLocations(locationsMap);
+  };
+
+  const getCoordinatesForLocation = async (locationName) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?access_token=${
+          mapboxgl.accessToken
+        }&types=place,locality,neighborhood`
+      );
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        return data.features[0].center;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error getting coordinates for ${locationName}:`, error);
+      return null;
     }
   };
 
@@ -128,130 +268,20 @@ function Map() {
 
     setNewsArticlesForLocation(articlesMap);
     setNewsLoaded(true);
-    console.log("News articles map:", articlesMap);
   };
 
-  const getCoordinatesForLocation = async (locationName) => {
+  const fetchNewsForLocation = async (location) => {
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?` +
-          `access_token=${mapboxgl.accessToken}&` +
-          `types=place,locality,neighborhood`
-      );
-
-      const data = await response.json();
-
-      if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center;
-        console.log(`Coordinates for ${locationName}:`, { lng, lat });
-        return [lng, lat];
+      if (location === "Vancouver") {
+        return newsData.Vancouver.data;
+      } else {
+        return newsData.UBC.data;
       }
-      return null;
     } catch (error) {
-      console.error(`Error getting coordinates for ${locationName}:`, error);
-      return null;
+      console.error(`Error fetching news for ${location}:`, error);
+      return [];
     }
   };
-
-  const updateNewsLocations = async () => {
-    if (!locationKeywords.size) return;
-
-    const locationsMap = {};
-
-    for (const locationName of locationKeywords) {
-      const coordinates = await getCoordinatesForLocation(locationName);
-      if (coordinates) {
-        locationsMap[locationName] = coordinates;
-      }
-    }
-
-    setNewsLocations(locationsMap);
-    console.log("News locations map:", locationsMap);
-  };
-
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([longitude, latitude]);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setLocationError(error.message);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      setLocationError("Geolocation is not supported by this browser.");
-    }
-  }, []);
-
-  useEffect(() => {
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/navigation-night-v1",
-      center: userLocation || [-123.1207, 49.2827],
-      zoom: 14,
-    });
-
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      marker: true,
-      placeholder: "Search for places",
-      proximity: userLocation,
-    });
-
-    mapRef.current.addControl(geocoder, "top-left");
-
-    const geolocateControl = new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      trackUserLocation: true,
-      showUserHeading: true,
-    });
-
-    mapRef.current.addControl(geolocateControl);
-
-    mapRef.current.on("load", () => {
-      if (userLocation) {
-        mapRef.current.flyTo({
-          center: userLocation,
-          zoom: 11,
-        });
-      }
-
-      setMapLoaded(true);
-    });
-
-    return () => {
-      mapRef.current?.remove();
-    };
-  }, [userLocation]);
-
-  useEffect(() => {
-    if (mapLoaded) {
-      fetchFireLocations();
-    }
-  }, [mapLoaded]);
-
-  useEffect(() => {
-    if (mapLoaded && fireLocations.length > 0) {
-      updateLocationKeywords();
-    }
-  }, [mapLoaded, fireLocations]);
-
-  useEffect(() => {
-    if (locationKeywords.size > 0) {
-      updateNewsArticles();
-    }
-  }, [locationKeywords]);
 
   useEffect(() => {
     if (locationKeywords.size > 0) {
@@ -259,12 +289,68 @@ function Map() {
     }
   }, [locationKeywords]);
 
+  useEffect(() => {
+    if (newsLocations && Object.keys(newsLocations).length > 0) {
+      updateNewsArticles();
+    }
+  }, [newsLocations]);
+
+  useEffect(() => {
+    if (fireData.length > 0) {
+      updateClusters();
+    }
+  }, [fireData]);
+
   return (
     <>
+      {showStream && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 99999,
+          }}
+        >
+          <button
+            onClick={() => setShowStream(false)}
+            style={{
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              background: "rgba(0, 0, 0, 0.5)",
+              border: "none",
+              color: "white",
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              zIndex: 100000,
+              fontSize: "18px",
+            }}
+          >
+            ✕
+          </button>
+          <StreamPlayer playbackId={PLAYBACK_ID} />
+        </div>
+      )}
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
-      {locationError && <div className="sidebar">Location error: {locationError}</div>}
       {mapLoaded &&
-        fireLocations.map((location, index) => <FireMarker key={index} map={mapRef.current} location={location} />)}
+        fireClusters.map((cluster, index) => (
+          <FireMarker
+            key={index}
+            map={mapRef.current}
+            location={cluster.center}
+            count={cluster.fires.length}
+            fires={cluster.fires}
+            onClick={(fires) => alert(`This cluster contains ${fires.length} fires:\n${fires.join(", ")}`)}
+          />
+        ))}
       {mapLoaded &&
         newsLoaded &&
         Object.entries(newsLocations).map(([locationName, coordinates], index) => (

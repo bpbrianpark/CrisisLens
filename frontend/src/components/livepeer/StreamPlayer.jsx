@@ -1,13 +1,15 @@
 import * as Player from "@livepeer/react/player";
 import { getSrc } from "@livepeer/react/external";
 import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import PropTypes from 'prop-types';
 
 export default function StreamPlayer({ playbackId }) {
     const [src, setSrc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [videoError, setVideoError] = useState(null);
+    const mediaElementRef = useRef(null);
+    const autoPlayButtonRef = useRef(null);
 
     useEffect(() => {
         try {
@@ -37,6 +39,19 @@ export default function StreamPlayer({ playbackId }) {
         }
     }, [playbackId]);
 
+    useEffect(() => {
+        if (autoPlayButtonRef.current) {
+            const clickAutoPlayButton = () => {
+                console.log("Clicking auto-play button");
+                autoPlayButtonRef.current.click();
+            }
+            clickAutoPlayButton()
+            const timeoutId = setTimeout(clickAutoPlayButton, 100);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [src]);
+
     if (loading) return <p>Loading player...</p>;
     if (!src) return (
         <div className="p-4 bg-red-100 text-red-700 rounded">
@@ -46,7 +61,48 @@ export default function StreamPlayer({ playbackId }) {
     );
 
     return (
-        <div className="flex flex-col gap-2">
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vw',
+            background: 'transparent',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+            <button
+                ref={autoPlayButtonRef}
+                onClick={() => {
+                    const playButton = document.querySelector('[aria-label="Play"]');
+                    if (playButton) {
+                        playButton.click();
+                    }
+                    if (mediaElementRef.current) {
+                        mediaElementRef.current.play().catch(err => 
+                            console.error("Failed to play:", err)
+                        );
+                    }
+                }}
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '1px',
+                    height: '1px',
+                    padding: 0,
+                    margin: '-1px',
+                    overflow: 'hidden',
+                    clip: 'rect(0, 0, 0, 0)',
+                    whiteSpace: 'nowrap',
+                    border: 0,
+                    opacity: 0,
+                    pointerEvents: 'none'
+                }}
+                aria-hidden="true"
+            />
             <Player.Root 
                 src={src}
                 onError={(error) => {
@@ -54,49 +110,104 @@ export default function StreamPlayer({ playbackId }) {
                     setVideoError(error);
                 }}
             >
-                <Player.Container className="h-[400px] w-full bg-gray-950">
+                <Player.Container style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'black'
+                }}>
                     <Player.Video 
                         title="Livestream" 
-                        className="h-full w-full" 
+                        style={{
+                            width: '100vw',
+                            height: '80vh',
+                            maxWidth: 'none',
+                            maxHeight: 'none',
+                            objectFit: 'cover'
+                        }}
+                        autoPlay
+                        muted
+                        ref={mediaElementRef}
                         onError={(e) => console.error("Video element error:", e)}
                         onLoadStart={() => console.log("Livestream loading started")}
                         onLoadedData={() => console.log("Livestream data loaded")}
                         onPlay={() => console.log("Livestream started playing")}
                     />
 
-                    <Player.Controls className="flex items-center justify-center">
-                        <Player.PlayPauseTrigger className="w-10 h-10 hover:scale-105 flex-shrink-0">
+                    <Player.Controls style={{
+                        position: 'absolute',
+                        bottom: '10%',
+                        left: '50%',
+                        transform: 'translateX(-50%)'
+                    }}>
+                        <Player.PlayPauseTrigger className="w-16 h-16 hover:scale-105 flex-shrink-0">
                             <Player.PlayingIndicator asChild matcher={false}>
-                                <PlayIcon className="w-full h-full" />
+                                <PlayIcon className="w-full h-full text-white" />
                             </Player.PlayingIndicator>
                             <Player.PlayingIndicator asChild>
-                                <PauseIcon className="w-full h-full" />
+                                <PauseIcon className="w-full h-full text-white" />
                             </Player.PlayingIndicator>
                         </Player.PlayPauseTrigger>
                     </Player.Controls>
 
                     <Player.LoadingIndicator asChild>
-                        <div className="absolute top-1 left-1 bg-black/50 px-2 py-1 rounded-full text-white text-sm">
+                        <div style={{
+                            position: 'absolute',
+                            top: '20px',
+                            left: '20px',
+                            background: 'rgba(0,0,0,0.5)',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            color: 'white',
+                            fontSize: '14px'
+                        }}>
                             Loading livestream...
                         </div>
                     </Player.LoadingIndicator>
 
                     <Player.LiveIndicator>
-                        <div className="absolute top-1 right-1 bg-red-500 px-2 py-1 rounded-full text-white text-sm flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                        <div style={{
+                            position: 'absolute',
+                            top: '20px',
+                            right: '20px',
+                            background: '#ff0000',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            color: 'white',
+                            fontSize: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <div style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: 'white',
+                                animation: 'pulse 2s infinite'
+                            }} />
                             LIVE
                         </div>
                     </Player.LiveIndicator>
                 </Player.Container>
             </Player.Root>
             
-            <div className="text-sm text-gray-600">
-                <p>Livestream Source: {src}</p>
-                <p>Playback ID: {playbackId}</p>
-                {videoError && (
-                    <p className="text-red-500">Error: {JSON.stringify(videoError)}</p>
-                )}
-            </div>
+            {videoError && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: '20px',
+                    left: '20px',
+                    color: 'red',
+                    background: 'rgba(0,0,0,0.5)',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    zIndex: 999999
+                }}>
+                    Error: {JSON.stringify(videoError)}
+                </div>
+            )}
         </div>
     );
 } 

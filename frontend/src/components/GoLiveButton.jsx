@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import PropTypes from "prop-types";
 import "../App.css";
 
-const GoLiveButton = () => {
+const GoLiveButton = ({ handleStartStream }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
@@ -24,6 +25,7 @@ const GoLiveButton = () => {
               playbackId: null,
               category: null,
             });
+            handleStartStream();
           } catch (error) {
             console.error("Error saving to Firestore:", error);
             alert("Failed to save stream data. Please try again.");
@@ -67,6 +69,10 @@ const GoLiveButton = () => {
       Record Now
     </button>
   );
+};
+
+GoLiveButton.propTypes = {
+  handleStartStream: PropTypes.func.isRequired,
 };
 
 export default GoLiveButton;

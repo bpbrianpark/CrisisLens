@@ -5,8 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
 export default function StreamPlayer({ selectedCluster, onClose }) {
-  // const playbackId = selectedCluster.fires[0].playbackId;
-  const playbackId = "1667ubzfld6xw4me";
+  const playbackId = selectedCluster.fires[0].playbackId;
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);

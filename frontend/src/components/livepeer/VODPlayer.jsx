@@ -2,11 +2,9 @@ import * as Player from "@livepeer/react/player";
 import { getSrc } from "@livepeer/react/external";
 import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
 import { useState, useEffect, useRef } from "react";
-import PropTypes from "prop-types";
 import { Livepeer } from "livepeer";
 
 export const getPlaybackSource = async ({ playbackId }) => {
-  playbackId = "4b83ug5jl43l2k0i";
   try {
     const livepeer = new Livepeer({ apiKey: import.meta.env.VITE_LIVEPEER_API_KEY });
     const playbackInfo = await livepeer.playback.get(playbackId);

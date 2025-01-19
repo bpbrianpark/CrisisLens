@@ -15,7 +15,6 @@ function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();
   const markerRef = useRef(null);
-  const popupRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [showStream, setShowStream] = useState(false);
@@ -87,113 +86,56 @@ function Map() {
       .setLngLat(fixedLocation)
       .addTo(mapRef.current);
 
-    popupRef.current = new mapboxgl.Popup({ 
-      offset: 25, 
-      maxWidth: '400px',
-      closeOnClick: false
-    });
-
-    const updatePopupContent = () => {
-      popupRef.current.setHTML(`
-        <div style="min-width: 320px;">
-          <h3 style="margin-bottom: 10px;">Live Emergency Stream</h3>
-          <div id="stream-container"></div>
-        </div>
-      `);
-    };
-
     markerRef.current.getElement().style.cursor = "pointer";
     markerRef.current.getElement().addEventListener("click", () => {
       setShowStream(true);
-      updatePopupContent();
-      popupRef.current.setLngLat(fixedLocation).addTo(mapRef.current);
-    });
-
-    popupRef.current.on('close', () => {
-      setShowStream(false);
-    });
-
-    popupRef.current.on('open', () => {
-      const container = document.getElementById('stream-container');
-      if (container && showStream) {
-        const playbackId = PLAYBACK_ID;
-        ReactDOM.render(<StreamPlayer playbackId={playbackId} />, container);
-      }
-    });
-
-    mapRef.current.on("load", () => {
-      // Define Vancouver disaster zone
-      const vancouverDisasterZone = {
-        type: "Feature",
-        geometry: {
-          type: "Polygon",
-          coordinates: [
-            [
-              [-123.14, 49.29],
-              [-123.14, 49.26],
-              [-123.1, 49.26],
-              [-123.1, 49.29],
-              [-123.14, 49.29],
-            ],
-          ],
-        },
-      };
-
-      mapRef.current.addSource("vancouver-disaster-area", {
-        type: "geojson",
-        data: vancouverDisasterZone,
-      });
-
-      mapRef.current.addLayer({
-        id: "disaster-layer",
-        type: "fill",
-        source: "vancouver-disaster-area",
-        paint: {
-          "fill-color": "#FF0000",
-          "fill-opacity": 0.4,
-        },
-      });
-
-      mapRef.current.addLayer({
-        id: "disaster-outline",
-        type: "line",
-        source: "vancouver-disaster-area",
-        paint: {
-          "line-color": "#FF0000",
-          "line-width": 2,
-        },
-      });
-
-      if (userLocation) {
-        mapRef.current.flyTo({
-          center: userLocation,
-          zoom: 14,
-        });
-      }
     });
 
     return () => {
-      if (popupRef.current) popupRef.current.remove();
       if (markerRef.current) markerRef.current.remove();
       mapRef.current?.remove();
     };
   }, [userLocation]);
-
-  useEffect(() => {
-    if (showStream && popupRef.current) {
-      const container = document.getElementById('stream-container');
-      if (container) {
-        const playbackId = PLAYBACK_ID;
-        ReactDOM.render(<StreamPlayer playbackId={playbackId} />, container);
-      }
-    }
-  }, [showStream]);
 
   return (
     <>
       <div id="map-container" ref={mapContainerRef} />
       {locationError && (
         <div className="sidebar">Location error: {locationError}</div>
+      )}
+      {showStream && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 99999
+        }}>
+          <button
+            onClick={() => setShowStream(false)}
+            style={{
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: 'none',
+              color: 'white',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 100000,
+              fontSize: '18px'
+            }}
+          >
+            ✕
+          </button>
+          <StreamPlayer playbackId={PLAYBACK_ID} />
+        </div>
       )}
     </>
   );

@@ -427,7 +427,7 @@ function Map() {
           // {selectedCluster.fires[0].isOngoing ? (
             <StreamPlayer selectedCluster={selectedCluster} onClose={() => setShowStream(false)} />
           ) : (
-            <VODPlayer playbackId={selectedCluster.fires[0].playbackId} />
+            <VODPlayer playbackId={selectedCluster.fires[0].playbackId} onClose={() => setShowStream(false)} />
           )}
         </div>
       )}

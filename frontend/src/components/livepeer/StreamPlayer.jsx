@@ -24,13 +24,11 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
       };
 
       const playbackUrl = getSrc(source);
-      console.log("Livestream URL:", playbackUrl);
 
       if (playbackUrl) {
         setSrc(playbackUrl);
       } else {
         const hlsUrl = `https://livepeercdn.com/hls/${playbackId}/index.m3u8`;
-        console.log("Falling back to HLS URL:", hlsUrl);
         setSrc(hlsUrl);
       }
     } catch (error) {
@@ -44,7 +42,6 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
   useEffect(() => {
     if (autoPlayButtonRef.current) {
       const clickAutoPlayButton = () => {
-        console.log("Clicking auto-play button");
         autoPlayButtonRef.current.click();
       };
       clickAutoPlayButton();
@@ -148,9 +145,9 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
             muted
             ref={mediaElementRef}
             onError={(e) => console.error("Video element error:", e)}
-            onLoadStart={() => console.log("Livestream loading started")}
-            onLoadedData={() => console.log("Livestream data loaded")}
-            onPlay={() => console.log("Livestream started playing")}
+            onLoadStart={() => {}}
+            onLoadedData={() => {}}
+            onPlay={() => {}}
           />
           <button
             onClick={onClose}

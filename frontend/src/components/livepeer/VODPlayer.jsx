@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 import { Livepeer } from "livepeer";
 
 export const getPlaybackSource = async ({ playbackId }) => {
-  console.log("PlaybackId:", playbackId);
+  playbackId = "4b83ug5jl43l2k0i";
   try {
     const livepeer = new Livepeer({ apiKey: import.meta.env.VITE_LIVEPEER_API_KEY });
     const playbackInfo = await livepeer.playback.get(playbackId);
@@ -18,7 +18,7 @@ export const getPlaybackSource = async ({ playbackId }) => {
   }
 };
 
-export default function VODPlayer({ playbackId }) {
+export default function VODPlayer({ playbackId, onClose }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
@@ -31,14 +31,12 @@ export default function VODPlayer({ playbackId }) {
         setLoading(true);
         // Use the getPlaybackSource function
         // const playbackUrl = await getPlaybackSource({playbackId});
-        const playbackUrl = await getPlaybackSource({playbackId: "1667ubzfld6xw4me"});
-        console.log("VOD URL:", playbackUrl);
+        const playbackUrl = await getPlaybackSource({ playbackId: "1667ubzfld6xw4me" });
 
         if (playbackUrl) {
           setSrc(playbackUrl);
         } else {
           const hlsUrl = `https://livepeercdn.com/hls/${playbackId}/index.m3u8`;
-          console.log("Falling back to HLS URL:", hlsUrl);
           setSrc(hlsUrl);
         }
       } catch (error) {
@@ -55,7 +53,6 @@ export default function VODPlayer({ playbackId }) {
   useEffect(() => {
     if (autoPlayButtonRef.current) {
       const clickAutoPlayButton = () => {
-        console.log("Clicking auto-play button");
         autoPlayButtonRef.current.click();
       };
       clickAutoPlayButton();
@@ -117,6 +114,17 @@ export default function VODPlayer({ playbackId }) {
         }}
         aria-hidden="true"
       />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100vh",
+          background: "rgba(0, 0, 0, 0.8)", // Dark translucent background
+          zIndex: 0, // Ensures it's behind the player
+        }}
+      />
       <Player.Root
         src={src}
         onError={(error) => {
@@ -147,11 +155,27 @@ export default function VODPlayer({ playbackId }) {
             muted
             ref={mediaElementRef}
             onError={(e) => console.error("Video element error:", e)}
-            onLoadStart={() => console.log("Livestream loading started")}
-            onLoadedData={() => console.log("Livestream data loaded")}
-            onPlay={() => console.log("Livestream started playing")}
+            onLoadStart={() => {}}
+            onLoadedData={() => {}}
+            onPlay={() => {}}
           />
-
+          <button
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              padding: "4px 8px",
+              background: "#ff4444",
+              border: "none",
+              color: "white",
+              borderRadius: "8px",
+              cursor: "pointer",
+              zIndex: 100000,
+            }}
+          >
+            Close
+          </button>
           <Player.Controls
             style={{
               position: "absolute",
@@ -183,7 +207,7 @@ export default function VODPlayer({ playbackId }) {
                 fontSize: "14px",
               }}
             >
-              Loading livestream...
+              Loading clip...
             </div>
           </Player.LoadingIndicator>
 
@@ -237,7 +261,3 @@ export default function VODPlayer({ playbackId }) {
     </div>
   );
 }
-
-VODPlayer.propTypes = {
-  playbackId: PropTypes.string.isRequired,
-};

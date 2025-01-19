@@ -87,7 +87,7 @@ function Map() {
       // Add the logo to the container
       const logo = document.createElement("img");
       logo.src = "https://i.imgur.com/soVndGN.png"; // Update with the actual path
-      logo.alt = "CrisisLine Logo";
+      logo.alt = "CrisisLens Logo";
       logo.style.width = "40px";
       logo.style.height = "40px";
   

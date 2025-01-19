@@ -5,23 +5,29 @@ import { db } from "../../firebase/firebase";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import StreamPlayer from "../livepeer/StreamPlayer";
+import ReactDOM from 'react-dom';
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
 
+
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
+const PLAYBACK_ID = "";
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 
 function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();
+  const markerRef = useRef(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [showStream, setShowStream] = useState(false);
   const [fireClusters, setFireClusters] = useState([]);
   const [fireData, setFireData] = useState([]);
   const [fireLocations, setFireLocations] = useState([]);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [userLocation, setUserLocation] = useState(null);
   const [newsLoaded, setNewsLoaded] = useState(false);
   const [locationKeywords, setLocationKeywords] = useState(new Set());
   const [newsLocations, setNewsLocations] = useState({});
@@ -174,7 +180,7 @@ function Map() {
     if (fireData.length === 0) {
       fetchFireData();
     }
-
+    
     if (fireData.length === 0) return;
 
     const zoom = mapRef.current.getZoom();
@@ -277,6 +283,8 @@ function Map() {
       return [];
     }
   };
+  
+  
 
   useEffect(() => {
     if (locationKeywords.size > 0) {
@@ -295,6 +303,48 @@ function Map() {
       updateClusters();
     }
   }, [fireData]);
+
+  return (
+    <>
+      <div id="map-container" ref={mapContainerRef} />
+      {locationError && (
+        <div className="sidebar">Location error: {locationError}</div>
+      )}
+      {showStream && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 99999
+        }}>
+          <button
+            onClick={() => setShowStream(false)}
+            style={{
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: 'none',
+              color: 'white',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 100000,
+              fontSize: '18px'
+            }}
+          >
+            ✕
+          </button>
+          <StreamPlayer playbackId={PLAYBACK_ID} />
+        </div>
+      )}
+    
 
   return (
     <>

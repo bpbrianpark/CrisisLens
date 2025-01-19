@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
-import PropTypes from "prop-types";
 
 function NewsMarker({ map, location, news, onClick }) {
   useEffect(() => {

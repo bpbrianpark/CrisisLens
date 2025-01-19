@@ -12,6 +12,8 @@ import NewsModal from "../NewsModal";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
+const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+
 function Map() {
   const mapRef = useRef();
   const mapContainerRef = useRef();

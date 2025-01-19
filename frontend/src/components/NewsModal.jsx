@@ -1,4 +1,4 @@
-import PropTypes from "prop-types";
+import React from "react";
 
 function NewsModal({ isOpen, news, onClose }) {
   if (!isOpen || !news || news.length === 0) return null;

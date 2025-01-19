@@ -5,8 +5,9 @@ import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import StreamPlayer from "../livepeer/StreamPlayer";
 import ReactDOM from 'react-dom';
+import { VITE_LIVEPEER_PLAYBACK_ID } from "../../env";
 
-const PLAYBACK_ID = "14000dstm36cexor";
+const PLAYBACK_ID = VITE_LIVEPEER_PLAYBACK_ID;
 
 mapboxgl.accessToken =
   "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";

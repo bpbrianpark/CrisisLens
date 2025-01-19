@@ -11,33 +11,15 @@ export default function StreamPlayer({ playbackId }) {
     const mediaElementRef = useRef(null);
     const autoPlayButtonRef = useRef(null);
 
-    useEffect(() => {
-        try {
-            const source = {
-                type: "playback",
-                meta: {
-                    live: true,
-                    playbackId: playbackId,
-                }
-            };
-            
-            const playbackUrl = getSrc(source);
-            console.log("Livestream URL:", playbackUrl);
-            
-            if (playbackUrl) {
-                setSrc(playbackUrl);
-            } else {
-                const hlsUrl = `https://livepeercdn.com/hls/${playbackId}/index.m3u8`;
-                console.log("Falling back to HLS URL:", hlsUrl);
-                setSrc(hlsUrl);
-            }
-        } catch (error) {
-            console.error("Error setting up livestream:", error);
-            setVideoError(error);
-        } finally {
-            setLoading(false);
-        }
-    }, [playbackId]);
+  useEffect(() => {
+    try {
+      const source = {
+        type: "playback",
+        meta: {
+          live: true,
+          playbackId: playbackId,
+        },
+      };
 
     useEffect(() => {
         if (autoPlayButtonRef.current) {
@@ -60,6 +42,8 @@ export default function StreamPlayer({ playbackId }) {
         </div>
     );
 
+  if (loading) return <p>Loading player...</p>;
+  if (!src)
     return (
         <div style={{
             position: 'fixed',
@@ -210,8 +194,8 @@ export default function StreamPlayer({ playbackId }) {
             )}
         </div>
     );
-} 
+}
 
 StreamPlayer.propTypes = {
-    playbackId: PropTypes.string.isRequired
-}; 
+  playbackId: PropTypes.string.isRequired,
+};

@@ -60,3 +60,51 @@
 .mapboxgl-ctrl-geocoder--suggestion-address {
   color: #ffffff !important;
 }
+
+.record-button {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff4444;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 999;
+}
+
+.stream-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  background-color: black;
+  overflow: hidden;
+}
+
+.stream-overlay video {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100vh;
+  width: auto;
+  min-width: 100vw;
+  transform: translateX(0);
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .stream-overlay video {
+    transform: translateX(-35%);
+  }
+}

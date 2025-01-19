@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 
-function NewsMarker({ map, location, news }) {
+function NewsMarker({ map, location, news, onClick }) {
   useEffect(() => {
     if (!news || news.length === 0) {
       console.warn(`No news available for location: ${location}`);
@@ -16,12 +16,9 @@ function NewsMarker({ map, location, news }) {
 
     const marker = new mapboxgl.Marker(markerElement).setLngLat(location).addTo(map);
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setText(news[0]?.title || "No title available");
-
-    marker.setPopup(popup);
     marker.getElement().style.cursor = "pointer";
     marker.getElement().addEventListener("click", () => {
-      popup.addTo(map);
+      onClick(news);
     });
 
     return () => marker.remove();

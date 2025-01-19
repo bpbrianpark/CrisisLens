@@ -8,6 +8,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
+import NewsModal from "../NewsModal";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
@@ -24,6 +25,18 @@ function Map() {
   const [locationKeywords, setLocationKeywords] = useState(new Set());
   const [newsLocations, setNewsLocations] = useState({});
   const [newsArticlesForLocation, setNewsArticlesForLocation] = useState({});
+  const [selectedNews, setSelectedNews] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (news) => {
+    setSelectedNews(news);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedNews(null);
+    setIsModalOpen(false);
+  };
 
   const fetchFireLocations = async () => {
     try {
@@ -50,7 +63,6 @@ function Map() {
       );
       const data = await response.json();
 
-      // Extract relevant location names from the response
       const features = data.features || [];
       const locationNames = features.map((feature) => feature.text).filter(Boolean);
 
@@ -261,8 +273,10 @@ function Map() {
             map={mapRef.current}
             location={coordinates}
             news={newsArticlesForLocation[locationName]}
+            onClick={(news) => openModal(news)}
           />
         ))}
+      <NewsModal isOpen={isModalOpen} news={selectedNews} onClose={closeModal} />
     </>
   );
 }

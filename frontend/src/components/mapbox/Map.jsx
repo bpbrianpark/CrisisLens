@@ -3,6 +3,7 @@ import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
+import FireMarker from "./FireMarker";
 
 mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
 
@@ -11,6 +12,12 @@ function Map() {
   const mapContainerRef = useRef();
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [fireLocations] = useState([
+    [-123.249, 49.2606],
+    [-123.219, 49.2506],
+    [-123.259, 49.2706],
+  ]);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -66,25 +73,6 @@ function Map() {
 
     mapRef.current.addControl(geolocateControl);
 
-    const fixedLocation = [-123.249, 49.2606];
-
-    const markerElement = document.createElement("div");
-    markerElement.style.backgroundImage =
-      "url(https://uxwing.com/wp-content/themes/uxwing/download/e-commerce-currency-shopping/flame-icon.png)";
-    markerElement.style.backgroundSize = "contain";
-    markerElement.style.width = "30px";
-    markerElement.style.height = "30px";
-
-    const marker = new mapboxgl.Marker(markerElement).setLngLat(fixedLocation).addTo(mapRef.current);
-
-    const popup = new mapboxgl.Popup({ offset: 25 }).setText("This is a generic popup message.");
-
-    marker.setPopup(popup);
-    marker.getElement().style.cursor = "pointer";
-    marker.getElement().addEventListener("click", () => {
-      popup.addTo(mapRef.current);
-    });
-
     mapRef.current.on("load", () => {
       // Define Vancouver disaster zone
       const vancouverDisasterZone = {
@@ -134,6 +122,8 @@ function Map() {
           zoom: 14,
         });
       }
+
+      setMapLoaded(true);
     });
 
     return () => {
@@ -145,6 +135,10 @@ function Map() {
     <>
       <div id="map-container" ref={mapContainerRef} />
       {locationError && <div className="sidebar">Location error: {locationError}</div>}
+      {mapLoaded &&
+        fireLocations.map((location, index) => (
+          <FireMarker key={`${location[0]}-${location[1]}`} map={mapRef.current} location={location} />
+        ))}
     </>
   );
 }

@@ -28,8 +28,7 @@ export default function VODPlayer({ playbackId, onClose }) {
       try {
         setLoading(true);
         // Use the getPlaybackSource function
-        // const playbackUrl = await getPlaybackSource({playbackId});
-        const playbackUrl = await getPlaybackSource({ playbackId: "1667ubzfld6xw4me" });
+        const playbackUrl = await getPlaybackSource({playbackId});
 
         if (playbackUrl) {
           setSrc(playbackUrl);

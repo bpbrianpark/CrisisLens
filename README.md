@@ -1,5 +1,13 @@
 # CrisisLens 🌍📹
 
+<div style="display: flex; gap: 10px; flex-wrap: nowrap;">
+  <img src="https://github.com/user-attachments/assets/b7a9422a-fe9b-4cad-b0b4-62629fd76b99" alt="Screen Recording 1" width="200">
+  <img src="https://github.com/user-attachments/assets/ac70e879-5780-4fa2-b621-7b803b38f688" alt="Screen Recording 2" width="200">
+  <img src="https://github.com/user-attachments/assets/bb113a28-f79a-4b9d-9256-18e875480e35" alt="Screen Recording 3" width="200">
+  <img src="https://github.com/user-attachments/assets/3a7283ab-12ff-42a3-92a6-77dea1fcafca" alt="Screen Recording 4" width="200">
+</div>
+
+
 ## 🌟 **Inspiration**
 
 CrisisLens was inspired by two pivotal global trends:

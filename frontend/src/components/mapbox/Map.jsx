@@ -6,7 +6,6 @@ import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import StreamPlayer from "../livepeer/StreamPlayer";
-import ReactDOM from "react-dom";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import { newsData } from "./newsData";
@@ -14,7 +13,7 @@ import NewsModal from "../NewsModal";
 import * as turf from "@turf/turf";
 import VODPlayer from "../livepeer/VODPlayer";
 
-mapboxgl.accessToken = "pk.eyJ1IjoiYWxldGhlYWsiLCJhIjoiY202MnhkcXB5MTI3ZzJrbzhyeTJ4NXdnaCJ9.eSFNm5gmF2-oVfqyZ3RZ3Q";
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 
@@ -34,7 +33,6 @@ function Map() {
   const [newsArticlesForLocation, setNewsArticlesForLocation] = useState({});
   const [selectedNews, setSelectedNews] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hullPolygon, setHullPolygon] = useState(null);
 
   const openModal = (news) => {
     setSelectedNews(news);
@@ -439,7 +437,18 @@ function Map() {
           // Calculate the convex hull for multiple points
           const clusterPoints = turf.featureCollection(cluster);
           const hull = turf.convex(clusterPoints);
-          geometry = turf.buffer(hull, 0.2, { units: "kilometers" });
+          
+          // Check if convex hull was successfully created
+          if (hull) {
+            geometry = turf.buffer(hull, 0.2, { units: "kilometers" });
+          } else {
+            // Fallback: create a circle around the centroid if convex hull fails
+            const centroid = turf.centroid(clusterPoints);
+            geometry = turf.circle(centroid.geometry.coordinates, 0.2, {
+              steps: 64,
+              units: "kilometers",
+            });
+          }
         }
 
         // Add the source and layer to the map for each cluster

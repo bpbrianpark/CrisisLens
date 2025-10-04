@@ -1,0 +1,59 @@
+.broadcast-container {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+}
+
+.broadcast-body {
+    height: 100%;
+    width: 100%;
+    background-color: #030712;
+    position: relative;
+}
+
+.broadcast {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.broadcast-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px;
+    background: #000000;
+}
+
+.broadcast-live-indicator {
+    font-weight: bold;
+    color: #ff6b6b;
+    font-size: 18px;
+}
+
+.timer {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.end-button {
+    background-color: #ff6b6b;
+    color: white;
+    padding: 3px 5px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 18px;
+}
+
+.end-button:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}

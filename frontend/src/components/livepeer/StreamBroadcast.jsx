@@ -4,6 +4,8 @@ import { getIngest } from "@livepeer/react/external";
 import { toast } from "react-toastify";
 import PropTypes from "prop-types";
 
+import "./stream-broadcast.css";
+
 export default function StreamBroadcast({ streamKey, onClose }) {
   const [timer, setTimer] = useState(0);
 
@@ -22,8 +24,7 @@ export default function StreamBroadcast({ streamKey, onClose }) {
   };
 
   return (
-    <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
-      {/* Broadcast Video */}
+    <div className="broadcast-container">
       <Broadcast.Root
         ingestUrl={getIngest(streamKey)}
         forceEnabled={true}
@@ -34,72 +35,15 @@ export default function StreamBroadcast({ streamKey, onClose }) {
             : toast.error("An error occurred while broadcasting.")
         }
       >
-        <Broadcast.Container className="h-full w-full bg-gray-950 relative">
-          <Broadcast.Video
-            playsInline
-            muted
-            title="Current Livestream"
-            className="h-full w-full object-cover"
-          />
+        <Broadcast.Container className="broadcast-body">
+          <Broadcast.Video playsInline muted title="Current Livestream" className="broadcast" />
 
-          {/* Overlay: Timer and Close Button */}
-          <div
-            style={{
-              position: "absolute",
-              top: "0px",
-              left: "0",
-              right: "0",
-              zIndex: 10,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "0 20px",
-              background: "#000000",
-              paddingTop: "8px",
-              paddingBottom: "8px",
-            }}
-          >
-            {/* Left: Live */}
-            <span
-              style={{
-                fontWeight: "bold",
-                color: "#ff6b6b",
-                fontSize: "18px",
-              }}
-              className="text-sm font-semibold"
-            >
-              LIVE
-            </span>
+          <div className="broadcast-overlay">
+            <span className="broadcast-live-indicator">LIVE</span>
 
-            {/* Center: Timer */}
-            <div
-              style={{
-                color: "#ffffff",
-                fontWeight: "bold",
-                fontSize: "18px",
-              }}
-            >
-              {formatTime(timer)}
-            </div>
+            <div className="timer">{formatTime(timer)}</div>
 
-            {/* Right: Close Button */}
-            <button
-              onClick={onClose}
-              style={{
-                // backgroundColor: "rgba(255, 255, 255, 0.2)",
-                backgroundColor: "#ff6b6b",
-                color: "white",
-                padding: "3px 5px",
-                fontWeight: "bold",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                transition: "background-color 0.3s",
-                fontSize: "18px",
-              }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255, 255, 255, 0.4)")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255, 255, 255, 0.2)")}
-            >
+            <button onClick={onClose} className="end-button">
               End
             </button>
           </div>

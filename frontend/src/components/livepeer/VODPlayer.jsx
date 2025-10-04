@@ -4,7 +4,7 @@ import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
 import { useState, useEffect, useRef } from "react";
 import { Livepeer } from "livepeer";
 
-import './vod-player.css'
+import './playback.css'
 
 export const getPlaybackSource = async ({ playbackId }) => {
   try {
@@ -71,7 +71,7 @@ export default function VODPlayer({ playbackId, onClose }) {
 
   return (
     <div
-      className="vod-player"
+      className="player"
     >
       <button
         ref={autoPlayButtonRef}
@@ -88,7 +88,7 @@ export default function VODPlayer({ playbackId, onClose }) {
         aria-hidden="true"
       />
       <div
-        className="vod-player-root"
+        className="player-root"
       />
       <Player.Root
         src={src}
@@ -98,11 +98,11 @@ export default function VODPlayer({ playbackId, onClose }) {
         }}
       >
         <Player.Container
-          className="vod-player-container"
+          className="player-container"
         >
           <Player.Video
             title="Livestream"
-            className="vod-player-video"
+            className="player-video"
             autoPlay
             muted
             ref={mediaElementRef}
@@ -153,7 +153,7 @@ export default function VODPlayer({ playbackId, onClose }) {
 
       {videoError && (
         <div
-          className="vod-error"
+          className="playback-error"
         >
           Error: {JSON.stringify(videoError)}
         </div>

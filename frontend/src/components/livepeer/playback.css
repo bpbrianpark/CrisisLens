@@ -5,7 +5,7 @@
     border-radius: 0.25rem;
 }
 
-.vod-player {
+.player {
     position: fixed;
     top: 0;
     left: 0;
@@ -34,7 +34,7 @@
     pointer-events: none;
 }
 
-.vod-player-root {
+.player-root {
     position: absolute;
     top: 0;
     left: 0;
@@ -44,7 +44,7 @@
     z-index: 0;
 }
 
-.vod-player-container {
+.player-container {
     width: 100%;
     height: 100%;
     display: flex;
@@ -53,7 +53,7 @@
     background: black;
 }
 
-.vod-player-video {
+.player-video {
     width: 100vw;
     height: 80vh;
     max-width: none;
@@ -113,7 +113,7 @@
     position: absolute;
     top: 20px;
     right: 20px;
-    background: #ff0000;
+    background: #ff4444;
     padding: 8px 16px;
     border-radius: 20px;
     color: white;
@@ -131,7 +131,7 @@
     animation: pulse 2s infinite;
 }
 
-.vod-error {
+.playback-error {
     position: fixed;
     bottom: 20px;
     left: 20px;

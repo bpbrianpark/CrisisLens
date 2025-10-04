@@ -1,0 +1,143 @@
+.playback-error-message {
+    padding: 1rem;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-radius: 0.25rem;
+}
+
+.vod-player {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vw;
+    background: transparent;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-button {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.vod-player-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0,0,0,0.8);
+    z-index: 0;
+}
+
+.vod-player-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: black;
+}
+
+.vod-player-video {
+    width: 100vw;
+    height: 80vh;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+}
+
+.close-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 4px 8px;
+    background: #ff4444;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 100000;
+}
+
+.controls {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.pause-trigger {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease-in-out;
+}
+
+.pause-trigger:hover {
+    transform: scale(1.05)
+}
+
+.player-icon {
+    width: 100%;
+    height: 100%;
+    color: white;
+}
+
+.loading-indicator {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+}
+
+.live-indicator-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #ff0000;
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.live-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    animation: pulse 2s infinite;
+}
+
+.vod-error {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    color: red;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 20px;
+    z-index: 999999;
+}

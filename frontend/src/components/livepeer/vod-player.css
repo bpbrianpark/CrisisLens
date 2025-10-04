@@ -10,7 +10,7 @@
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vw;
+    height: 100vh;
     background: transparent;
     z-index: 99999;
     display: flex;

@@ -39,7 +39,7 @@ export default function StreamBroadcast({ streamKey, onClose }) {
           <Broadcast.Video playsInline muted title="Current Livestream" className="broadcast" />
 
           <div className="broadcast-overlay">
-            <span className="live-indicator">LIVE</span>
+            <span className="broadcast-live-indicator">LIVE</span>
 
             <div className="timer">{formatTime(timer)}</div>
 

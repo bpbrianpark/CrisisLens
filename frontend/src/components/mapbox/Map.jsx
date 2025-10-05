@@ -33,6 +33,8 @@ function Map() {
   const [newsArticlesForLocation, setNewsArticlesForLocation] = useState({});
   const [selectedNews, setSelectedNews] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newsCache, setNewsCache] = useState({});
+  const [isNewsFetching, setIsNewsFetching] = useState(false);
 
   const openModal = (news) => {
     setSelectedNews(news);
@@ -293,23 +295,49 @@ function Map() {
   };
 
   const updateNewsArticles = async () => {
-    if (!locationKeywords.size) return;
+    if (!locationKeywords.size || isNewsFetching) return;
 
-    const articlesMap = {};
+    // Check if we already have all the articles we need
+    const neededLocations = Array.from(locationKeywords).filter(location => !newsCache[location]);
+    if (neededLocations.length === 0) {
+      // All articles are already cached, just update the display
+      const articlesMap = {};
+      for (const location of locationKeywords) {
+        articlesMap[location] = newsCache[location];
+      }
+      setNewsArticlesForLocation(articlesMap);
+      setNewsLoaded(true);
+      return;
+    }
+
+    setIsNewsFetching(true);
+    const articlesMap = { ...newsArticlesForLocation };
 
     for (const location of locationKeywords) {
+      // Check if we already have articles for this location
+      if (newsCache[location]) {
+        console.log(`📦 Using cached news for location: ${location}`);
+        articlesMap[location] = newsCache[location];
+        continue;
+      }
+
+      // Only fetch if not already cached
       const articles = await fetchNewsForLocation(location);
       if (articles) {
         articlesMap[location] = articles;
+        // Cache the articles
+        setNewsCache(prev => ({ ...prev, [location]: articles }));
       }
     }
 
     setNewsArticlesForLocation(articlesMap);
     setNewsLoaded(true);
+    setIsNewsFetching(false);
   };
 
   const fetchNewsForLocation = async (location) => {
     try {
+      console.log(`🔍 Fetching news for location: ${location}`);
       const query = encodeURIComponent(`${location} + (fire OR wildfire OR burning)`);
 
       const response = await fetch(
@@ -347,10 +375,10 @@ function Map() {
   }, [locationKeywords]);
 
   useEffect(() => {
-    if (newsLocations && Object.keys(newsLocations).length > 0) {
+    if (newsLocations && Object.keys(newsLocations).length > 0 && !isNewsFetching) {
       updateNewsArticles();
     }
-  }, [newsLocations]);
+  }, [newsLocations, isNewsFetching]);
 
   useEffect(() => {
     if (fireData.length > 0) {

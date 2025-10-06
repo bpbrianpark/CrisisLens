@@ -72,6 +72,14 @@ function Map() {
         longitude: doc.data().longitude,
         latitude: doc.data().latitude,
         ...doc.data(),
+      }));
+      setFireData(fires);
+      setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
+    } catch (error) {
+      console.error("Error fetching fire data:", error);
+    }
+  };
+
   const processFireData = (livestreams, assets) => {
     const activeLivestreams = livestreams
       .filter((stream) => 
@@ -255,8 +263,14 @@ function Map() {
     }, TRAFFIC_DATA_POLLING_INTERVAL);
 
     return () => {
-      clearInterval(fireIntervalId);
+      clearInterval(intervalId);
       clearInterval(trafficIntervalId);
+    };
+  }, [mapLoaded]);
+
+  useEffect(() => {
+    if (!mapLoaded) return;
+
     let livestreamsData = [];
     let assetsData = [];
 

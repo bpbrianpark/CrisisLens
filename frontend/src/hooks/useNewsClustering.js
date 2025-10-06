@@ -36,7 +36,6 @@ export const useNewsClustering = (newsLocations, newsArticlesForLocation, mapRef
   };
 
   const updateNewsClusters = useCallback(() => {
-    console.log("updateNewsClusters called. newsLocations:", newsLocations);
     if (!mapRef.current || !mapLoaded || Object.keys(newsLocations).length === 0) return;
 
     const zoom = mapRef.current.getZoom();
@@ -49,16 +48,7 @@ export const useNewsClustering = (newsLocations, newsArticlesForLocation, mapRef
       articles: newsArticlesForLocation[name] || []
     }));
     
-    console.log("News Location Data:", newsLocationData);
-    newsLocationData.forEach(location => {
-      console.log(`News Location: ${location.name} at ${location.longitude}, ${location.latitude}`);
-    });
-    
     const clusters = clusterNewsLocations(newsLocationData, zoom);
-    console.log("News Clusters:", clusters);
-    clusters.forEach(cluster => {
-      console.log(` Cluster at ${cluster.center[0]}, ${cluster.center[1]}:`, cluster.locations);
-    });
     
     setNewsClusters(clusters);
   }, [mapLoaded, newsLocations, newsArticlesForLocation, mapRef]);

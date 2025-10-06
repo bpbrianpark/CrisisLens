@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import PropTypes from "prop-types";
 
-function NewsMarker({ map, location, news, count = 1, onClick }) {
+function NewsMarker({ map, location, news, count = 1, onClick, locationNames }) {
   useEffect(() => {
     if (!news || news.length === 0) {
       console.warn(`No news available for location: ${location}`);
@@ -40,11 +40,11 @@ function NewsMarker({ map, location, news, count = 1, onClick }) {
     const marker = new mapboxgl.Marker(markerElement).setLngLat(location).addTo(map);
 
     if (onClick) {
-      markerElement.addEventListener("click", () => onClick(news));
+      markerElement.addEventListener("click", () => onClick(news, locationNames));
     }
 
     return () => marker.remove();
-  }, [map, location, news, count, onClick]);
+  }, [map, location, news, count, onClick, locationNames]);
 
   return null;
 }
@@ -55,6 +55,7 @@ NewsMarker.propTypes = {
   news: PropTypes.arrayOf(PropTypes.object).isRequired,
   count: PropTypes.number,
   onClick: PropTypes.func,
+  locationNames: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default NewsMarker;

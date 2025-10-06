@@ -26,7 +26,7 @@ function Map() {
   const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
   const { newsClusters, updateNewsClusters } = useNewsClustering(newsLocations, newsArticlesForLocation, mapRef, mapLoaded);
   const { showStream, selectedCluster, openStream, closeStream } = useStreamPlayer();
-  const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
+  const { selectedNews, locationNames, isModalOpen, openModal, closeModal } = useNewsModal();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
 
@@ -104,7 +104,8 @@ function Map() {
             location={cluster.center}
             news={cluster.locations.flatMap(location => location.articles)}
             count={cluster.locations.length}
-            onClick={(news) => openModal(news)}
+            locationNames={cluster.locations.map(location => location.name)}
+            onClick={(news, locationNames) => openModal(news, locationNames)}
           />
         ))}
 
@@ -132,7 +133,12 @@ function Map() {
       )}
 
       {/* News Modal */}
-      <NewsModal isOpen={isModalOpen} news={selectedNews} onClose={closeModal} />
+      <NewsModal 
+        isOpen={isModalOpen} 
+        news={selectedNews} 
+        onClose={closeModal} 
+        locationName={locationNames && locationNames.length > 0 ? locationNames.join(', ') : null}
+      />
     </>
   );
 }

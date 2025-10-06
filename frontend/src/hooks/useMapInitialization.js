@@ -29,15 +29,18 @@ export const useMapInitialization = () => {
     topLeftContainer.className = "custom-geocoder-container";
     topLeftContainer.style.display = "flex";
     topLeftContainer.style.alignItems = "center";
-    topLeftContainer.style.gap = "4px";
-    topLeftContainer.style.paddingLeft = "12px";
+    topLeftContainer.style.gap = "12px";
+    topLeftContainer.style.paddingLeft = "16px";
+    topLeftContainer.style.paddingTop = "16px";
 
     // Add the logo to the container
     const logo = document.createElement("img");
     logo.src = "https://i.imgur.com/soVndGN.png";
     logo.alt = "CrisisLens Logo";
-    logo.style.width = "40px";
-    logo.style.height = "40px";
+    logo.style.width = "44px";
+    logo.style.height = "44px";
+    logo.style.borderRadius = "12px";
+    logo.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
 
     // Append the logo and geocoder to the container
     topLeftContainer.appendChild(logo);

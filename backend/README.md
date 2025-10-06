@@ -9,6 +9,7 @@ This backend handles Livepeer stream management, webhook processing, and Firebas
 - Google Cloud CLI (`gcloud`)
 - Firebase project with Firestore enabled
 - Livepeer Studio account with API key
+- ngrok (for webhook development)
 
 ## Setup
 
@@ -18,7 +19,29 @@ This backend handles Livepeer stream management, webhook processing, and Firebas
 npm install
 ```
 
-### 2. Firebase Authentication Setup
+### 2. Setup Ngrok (for consistent webhook URLs)
+
+To ensure all team members can use the same webhook URL without needing individual Livepeer accounts:
+
+**For Team Lead:**
+1. Get ngrok account at https://dashboard.ngrok.com/ (free)
+2. Get your authtoken from the dashboard
+3. Create `.env` file with:
+   ```bash
+   NGROK_AUTHTOKEN=your_authtoken_here
+   NGROK_DOMAIN=crisislens.ngrok-free.app
+   ```
+4. Share `.env` with team members
+
+**For Team Members:**
+```bash
+# Start ngrok with consistent URL
+npm run ngrok
+```
+
+This will give you a consistent URL: `https://crisislens.ngrok-free.app`
+
+### 3. Firebase Authentication Setup
 
 #### Option A: Application Default Credentials (Recommended)
 
@@ -54,11 +77,23 @@ npm install
    export GOOGLE_APPLICATION_CREDENTIALS="path/to/your/service-account-key.json"
    ```
 
-### 3. Environment Variables
+### 4. Environment Variables
 
-Copy the `.env.example` file and rename it to `.env` in the backend directory:
+Create a `.env` file in the backend directory with the following variables:
 
-### 4. Get Your Livepeer API Key
+```bash
+# Livepeer Configuration
+LIVEPEER_API_KEY=your_livepeer_api_key_here
+
+# Ngrok Configuration (for consistent webhook URLs)
+NGROK_AUTHTOKEN=your_ngrok_authtoken_here
+NGROK_DOMAIN=crisislens.ngrok-free.app
+
+# Firebase Configuration (if using service account key)
+GOOGLE_APPLICATION_CREDENTIALS=path/to/your/service-account-key.json
+```
+
+### 5. Get Your Livepeer API Key
 
 1. Go to [Livepeer Studio](https://livepeer.studio/)
 2. Navigate to API Keys section
@@ -110,6 +145,8 @@ For local development, you need to expose your backend to the internet so Livepe
 
 1. Go to [Livepeer Studio](https://livepeer.studio/) → Developers → Webhooks
 2. Click "Create Webhook"
-3. Set the webhook URL to: `https://your-ngrok-url/livepeer/webhook`
+3. Set the webhook URL to: `https://crisislens.ngrok-free.app/livepeer/webhook`
 4. Select events: `asset.ready`
-6. Click "Create Webhook"
+5. Click "Create Webhook"
+
+**Note:** This URL will be consistent for all team members once ngrok is set up.

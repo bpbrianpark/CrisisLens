@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "ngrok": "ngrok http 8080",
+    "ngrok": "ngrok http 8080 --domain=${NGROK_DOMAIN:-crisislens.ngrok-free.app}",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

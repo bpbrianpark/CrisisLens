@@ -11,6 +11,7 @@ import { useMapInitialization } from "../../hooks/useMapInitialization";
 import { useFireData } from "../../hooks/useFireData";
 import { useNewsData } from "../../hooks/useNewsData";
 import { useFireClustering } from "../../hooks/useFireClustering";
+import { useNewsClustering } from "../../hooks/useNewsClustering";
 import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
@@ -23,8 +24,9 @@ function Map() {
   const { fireData, fireLocations } = useFireData(mapLoaded);
   const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(fireLocations);
   const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
+  const { newsClusters, updateNewsClusters } = useNewsClustering(newsLocations, newsArticlesForLocation, mapRef, mapLoaded);
+  const { selectedNews, locationNames, isModalOpen, openModal, closeModal } = useNewsModal();
   const { closeStream } = useStreamPlayer();
-  const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
   const [mapCenter, setMapCenter] = useState(null);
@@ -45,6 +47,7 @@ function Map() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateClusters();
+        updateNewsClusters();
         const center = currentMap.getCenter();
         setMapCenter({ latitude: center.lat, longitude: center.lng });
       }, 150);
@@ -56,7 +59,7 @@ function Map() {
       currentMap.off("moveend", handleMoveEnd);
       clearTimeout(debounceTimeout);
     };
-  }, [mapLoaded, updateClusters, mapRef]);
+  }, [mapLoaded, updateClusters, updateNewsClusters, mapRef]);
 
   return (
     <>
@@ -79,13 +82,15 @@ function Map() {
 
       {mapLoaded &&
         newsLoaded &&
-        Object.entries(newsLocations).map(([locationName, coordinates], index) => (
+        newsClusters.map((cluster, index) => (
           <NewsMarker
-            key={index}
+            key={`news-${index}`}
             map={mapRef.current}
-            location={coordinates}
-            news={newsArticlesForLocation[locationName]}
-            onClick={(news) => openModal(news)}
+            location={cluster.center}
+            news={cluster.locations.flatMap(location => location.articles)}
+            count={cluster.locations.length}
+            locationNames={cluster.locations.map(location => location.name)}
+            onClick={(news, locationNames) => openModal(news, locationNames)}
           />
         ))}
 
@@ -110,7 +115,13 @@ function Map() {
         />
       )}
 
-      <NewsModal isOpen={isModalOpen} news={selectedNews} onClose={closeModal} />
+      {/* News Modal */}
+      <NewsModal 
+        isOpen={isModalOpen} 
+        news={selectedNews} 
+        onClose={closeModal} 
+        locationName={locationNames && locationNames.length > 0 ? locationNames.join(', ') : null}
+      />
 
       {showVideoScroll && (
         <VideoScroll

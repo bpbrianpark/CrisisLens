@@ -21,7 +21,6 @@ const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
 
 const SAN_FRANCISCO_TRAFFIC_API_KEY = import.meta.env.VITE_SAN_FRANCISCO_TRAFFIC_API_KEY;
 
-const FIRE_DATA_POLLING_INTERVAL = 5000; 
 const TRAFFIC_DATA_POLLING_INTERVAL = 60 * 60 * 1000; // 1 hour
 
 function Map() {
@@ -63,21 +62,6 @@ function Map() {
 
   const closeClosurePopover = () => {
     setSelectedClosureEvent(null);
-  };
-
-  const fetchFireData = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "videos"));
-      const fires = querySnapshot.docs.map((doc) => ({
-        longitude: doc.data().longitude,
-        latitude: doc.data().latitude,
-        ...doc.data(),
-      }));
-      setFireData(fires);
-      setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
-    } catch (error) {
-      console.error("Error fetching fire data:", error);
-    }
   };
 
   const processFireData = (livestreams, assets) => {
@@ -207,7 +191,6 @@ function Map() {
       });
 
       mapRef.current.on("load", () => {
-        fetchFireData();
         fetchTrafficData();
         setMapLoaded(true);
       });
@@ -250,20 +233,13 @@ function Map() {
     if (!mapLoaded) return;
 
     // Initial fetch
-    fetchFireData();
     fetchTrafficData();
-
-    // Set up polling every 5 seconds
-    const intervalId = setInterval(() => {
-      fetchFireData();
-    }, FIRE_DATA_POLLING_INTERVAL);
 
     const trafficIntervalId = setInterval(() => {
       fetchTrafficData();
     }, TRAFFIC_DATA_POLLING_INTERVAL);
 
     return () => {
-      clearInterval(intervalId);
       clearInterval(trafficIntervalId);
     };
   }, [mapLoaded]);

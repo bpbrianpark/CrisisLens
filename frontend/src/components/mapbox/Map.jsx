@@ -17,6 +17,10 @@ import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
 import { useTrafficData } from "../../hooks/useTrafficData";
 import { useClosurePopover } from "../../hooks/useClosurePopover";
+import { useEmergencyData } from "../../hooks/useEmergencyData";
+import { useEmergencyPopover } from "../../hooks/useEmergencyPopover";
+import EmergencyMarker from "./EmergencyMarker";
+import EmergencyPopover from "./EmergencyPopover";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
@@ -27,6 +31,8 @@ function Map() {
   const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
+  const { emergencyLoaded, emergencyLocations } = useEmergencyData(mapLoaded);
+  const { selectedEmergencyEvent, openEmergencyPopover, closeEmergencyPopover } = useEmergencyPopover();
 
   useMapLayers(fireData, mapRef, mapLoaded);
 
@@ -34,12 +40,12 @@ function Map() {
     if (!mapRef.current || !mapLoaded) return;
 
     const currentMap = mapRef.current;
-    let debounceTimeout = null;
+      let debounceTimeout = null;
     const handleMoveEnd = () => {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        updateClusters();
-      }, 300);
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          updateClusters();
+        }, 300);
     };
 
     currentMap.on("moveend", handleMoveEnd);
@@ -124,6 +130,29 @@ function Map() {
           location={selectedClosureEvent.coordinates}
           event={selectedClosureEvent}
           onClose={closeClosurePopover}
+        />
+      )}
+
+      {/* Emergency Markers */}
+      {mapLoaded &&
+        emergencyLoaded &&
+        emergencyLocations.map((event, index) => (
+          <EmergencyMarker
+            key={index}
+            map={mapRef.current}
+            location={event.coordinates}
+            event={event}
+            onClick={openEmergencyPopover}
+          />
+        ))}
+
+      {/* Emergency Popover */}
+      {selectedEmergencyEvent && (
+        <EmergencyPopover
+          map={mapRef.current}
+          location={selectedEmergencyEvent.coordinates}
+          event={selectedEmergencyEvent}
+          onClose={closeEmergencyPopover}
         />
       )}
 

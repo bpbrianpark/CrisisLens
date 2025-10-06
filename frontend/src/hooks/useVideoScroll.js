@@ -4,6 +4,7 @@ export const useVideoScroll = (fireData, viewportCenter, closeStream) => {
   const [showVideoScroll, setShowVideoScroll] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [filteredVideos, setFilteredVideos] = useState([]);
+  const [referenceLocation, setReferenceLocation] = useState(null);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -16,10 +17,15 @@ export const useVideoScroll = (fireData, viewportCenter, closeStream) => {
     return R * c;
   };
 
-  const getNearbyVideos = useCallback(() => {
+  const getNearbyVideos = useCallback((clickedCluster = null) => {
     if (!viewportCenter || !fireData.length) return [];
 
     const maxDistance = 50;
+    
+    // If we have a clicked cluster, use its location as reference
+    const refLat = clickedCluster ? clickedCluster.center[1] : viewportCenter.latitude;
+    const refLon = clickedCluster ? clickedCluster.center[0] : viewportCenter.longitude;
+    
     return fireData
       .filter((video) => {
         if (!video.latitude || !video.longitude) return false;
@@ -32,20 +38,25 @@ export const useVideoScroll = (fireData, viewportCenter, closeStream) => {
         return distance <= maxDistance;
       })
       .sort((a, b) => {
-        const distanceA = calculateDistance(viewportCenter.latitude, viewportCenter.longitude, a.latitude, a.longitude);
-        const distanceB = calculateDistance(viewportCenter.latitude, viewportCenter.longitude, b.latitude, b.longitude);
+        const distanceA = calculateDistance(refLat, refLon, a.latitude, a.longitude);
+        const distanceB = calculateDistance(refLat, refLon, b.latitude, b.longitude);
         return distanceA - distanceB;
       });
   }, [fireData, viewportCenter]);
 
   useEffect(() => {
-    const nearbyVideos = getNearbyVideos();
-    setFilteredVideos(nearbyVideos);
-  }, [getNearbyVideos]);
+    // Only update if we don't have a reference location set
+    // (i.e., this is a passive update, not from a click)
+    if (!referenceLocation) {
+      const nearbyVideos = getNearbyVideos();
+      setFilteredVideos(nearbyVideos);
+    }
+  }, [getNearbyVideos, referenceLocation]);
 
   const openVideoScroll = useCallback(
-    (initialIndex = 0) => {
-      const nearbyVideos = getNearbyVideos();
+    (clickedCluster) => {
+      // Get videos sorted by distance from the clicked cluster
+      const nearbyVideos = getNearbyVideos(clickedCluster);
       if (nearbyVideos.length === 0) {
         console.warn("No videos found in the area");
         return;
@@ -55,7 +66,16 @@ export const useVideoScroll = (fireData, viewportCenter, closeStream) => {
         closeStream();
       }
 
-      setCurrentVideoIndex(Math.min(initialIndex, nearbyVideos.length - 1));
+      // Store the reference location for this session
+      if (clickedCluster && clickedCluster.center) {
+        setReferenceLocation({
+          latitude: clickedCluster.center[1],
+          longitude: clickedCluster.center[0],
+        });
+      }
+
+      setFilteredVideos(nearbyVideos);
+      setCurrentVideoIndex(0); // Start with the first video (closest to clicked fire)
       setShowVideoScroll(true);
     },
     [getNearbyVideos, closeStream]
@@ -64,6 +84,7 @@ export const useVideoScroll = (fireData, viewportCenter, closeStream) => {
   const closeVideoScroll = useCallback(() => {
     setShowVideoScroll(false);
     setCurrentVideoIndex(0);
+    setReferenceLocation(null); // Reset reference location when closing
   }, []);
 
   const changeVideo = useCallback(

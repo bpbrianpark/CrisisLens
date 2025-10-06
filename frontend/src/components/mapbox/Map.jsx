@@ -7,6 +7,7 @@ import ClosureMarker from "./ClosureMarker";
 import ClosurePopover from "./ClosurePopover";
 import NewsModal from "../NewsModal/NewsModal";
 import VideoScroll from "../VideoScroll/VideoScroll";
+import MapThemeToggle from "./MapThemeToggle";
 import { useMapInitialization } from "../../hooks/useMapInitialization";
 import { useFireData } from "../../hooks/useFireData";
 import { useNewsData } from "../../hooks/useNewsData";
@@ -30,6 +31,7 @@ function Map() {
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
   const [mapCenter, setMapCenter] = useState(null);
+  const [mapStyleVersion, setMapStyleVersion] = useState(0);
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
     useVideoScroll(fireData, mapCenter, closeStream);
 
@@ -61,9 +63,28 @@ function Map() {
     };
   }, [mapLoaded, updateClusters, updateNewsClusters, mapRef]);
 
+  // Handle map style changes and re-apply layers
+  useEffect(() => {
+    if (mapStyleVersion > 0) {
+      // Give the style time to fully load before updating
+      const timer = setTimeout(() => {
+        updateClusters();
+        updateNewsClusters();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [mapStyleVersion, updateClusters, updateNewsClusters]);
+
+  const handleThemeChange = () => {
+    // Increment version to trigger layer re-application
+    setMapStyleVersion((prev) => prev + 1);
+  };
+
   return (
     <>
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
+
+      {mapLoaded && <MapThemeToggle map={mapRef.current} onThemeChange={handleThemeChange} />}
 
       {mapLoaded &&
         fireClusters.map((cluster, index) => (
@@ -74,7 +95,7 @@ function Map() {
             count={cluster.fires.length}
             fires={cluster.fires}
             onClick={() => {
-              openVideoScroll(0);
+              openVideoScroll(cluster);
               console.log(cluster);
             }}
           />

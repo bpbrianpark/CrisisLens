@@ -1,0 +1,108 @@
+.theme-dropdown {
+  position: absolute;
+  top: 70px;
+  left: 16px;
+  width: 130px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 
+              0 4px 12px rgba(0, 0, 0, 0.08),
+              0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  padding: 8px;
+  animation: dropdownSlideIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1001;
+  pointer-events: auto;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.theme-dropdown.dark {
+  background: rgba(30, 41, 59, 0.98);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 
+              0 4px 12px rgba(0, 0, 0, 0.3),
+              0 0 0 0.5px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.theme-toggle-switch {
+  position: relative;
+  display: flex;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: background 0.3s ease;
+}
+
+.theme-dropdown.dark .theme-toggle-switch {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.theme-option {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-option:hover .theme-icon {
+  transform: scale(1.15);
+}
+
+.theme-option.active .theme-icon {
+  transform: scale(1.1);
+}
+
+.theme-icon {
+  font-size: 22px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+  filter: grayscale(50%) brightness(0.9);
+}
+
+.theme-option.active .theme-icon {
+  filter: grayscale(0%) brightness(1);
+}
+
+.theme-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12), 
+              0 1px 4px rgba(0, 0, 0, 0.08),
+              0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+  z-index: 1;
+}
+
+.theme-dropdown.dark .theme-slider {
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3), 
+              0 1px 4px rgba(0, 0, 0, 0.2),
+              0 0 0 0.5px rgba(255, 255, 255, 0.1);
+}
+

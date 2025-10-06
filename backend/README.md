@@ -35,12 +35,7 @@ To ensure all team members can use the same webhook URL without needing individu
 
 **For Team Members:**
 ```bash
-# Run the setup script
-./setup-ngrok.sh  # macOS/Linux
-# or
-setup-ngrok.bat   # Windows
-
-# Then start ngrok
+# Start ngrok with consistent URL
 npm run ngrok
 ```
 

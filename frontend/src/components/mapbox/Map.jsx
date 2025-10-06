@@ -8,6 +8,8 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import StreamPlayer from "../livepeer/StreamPlayer";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
+import ClosureMarker from "./ClosureMarker";
+import ClosurePopover from "./ClosurePopover";
 import { newsData } from "./newsData";
 import NewsModal from "../NewsModal";
 import * as turf from "@turf/turf";
@@ -16,6 +18,10 @@ import VODPlayer from "../livepeer/VODPlayer";
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+
+const SAN_FRANCISCO_TRAFFIC_API_KEY = import.meta.env.VITE_SAN_FRANCISCO_TRAFFIC_API_KEY;
+
+const TRAFFIC_DATA_POLLING_INTERVAL = 60 * 60 * 1000; // 1 hour
 
 function Map() {
   const mapRef = useRef();
@@ -33,6 +39,10 @@ function Map() {
   const [newsArticlesForLocation, setNewsArticlesForLocation] = useState({});
   const [selectedNews, setSelectedNews] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [trafficData, setTrafficData] = useState(null);
+  const [trafficLoaded, setTrafficLoaded] = useState(false);
+  const [trafficLocations, setTrafficLocations] = useState([]);
+  const [selectedClosureEvent, setSelectedClosureEvent] = useState(null);
   const [newsCache, setNewsCache] = useState({});
   const [isNewsFetching, setIsNewsFetching] = useState(false);
 
@@ -44,6 +54,14 @@ function Map() {
   const closeModal = () => {
     setSelectedNews(null);
     setIsModalOpen(false);
+  };
+
+  const openClosurePopover = (event) => {
+    setSelectedClosureEvent(event);
+  };
+
+  const closeClosurePopover = () => {
+    setSelectedClosureEvent(null);
   };
 
   const processFireData = (livestreams, assets) => {
@@ -78,6 +96,13 @@ function Map() {
     const fires = [...activeLivestreams, ...readyAssets];
     setFireData(fires);
     setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
+  };
+
+  const fetchTrafficData = async () => {
+    const response = await fetch(`https://api.511.org/traffic/events?api_key=${SAN_FRANCISCO_TRAFFIC_API_KEY}&format=json`);
+    const data = await response.json();
+    setTrafficData(data);
+    setTrafficLoaded(true);
   };
 
   useEffect(() => {
@@ -166,6 +191,7 @@ function Map() {
       });
 
       mapRef.current.on("load", () => {
+        fetchTrafficData();
         setMapLoaded(true);
       });
 
@@ -202,6 +228,21 @@ function Map() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!mapLoaded) return;
+
+    // Initial fetch
+    fetchTrafficData();
+
+    const trafficIntervalId = setInterval(() => {
+      fetchTrafficData();
+    }, TRAFFIC_DATA_POLLING_INTERVAL);
+
+    return () => {
+      clearInterval(trafficIntervalId);
+    };
+  }, [mapLoaded]);
 
   useEffect(() => {
     if (!mapLoaded) return;
@@ -436,6 +477,24 @@ function Map() {
   };
 
   useEffect(() => {
+    if (!trafficLoaded || !trafficData) return;
+  
+    const locations = trafficData.events
+      .filter((event) => event.geography && event.geography.coordinates)
+      .map((event) => ({
+        coordinates: event.geography.coordinates,
+        headline: event.headline,
+        status: event.status,
+        eventType: event.event_type,
+        roadName: event.roads?.[0]?.name,
+        severity: event.severity,
+      }));
+  
+    setTrafficLocations(locations);
+  }, [trafficLoaded, trafficData]);
+  
+
+  useEffect(() => {
     if (locationKeywords.size > 0) {
       updateNewsLocations();
     }
@@ -624,6 +683,25 @@ function Map() {
             onClick={(news) => openModal(news)}
           />
         ))}
+      {mapLoaded &&
+        trafficLoaded &&
+        trafficLocations.map((event, index) => (
+          <ClosureMarker
+            key={index}
+            map={mapRef.current}
+            location={event.coordinates}
+            event={event}
+            onClick={openClosurePopover}
+          />
+        ))}
+      {selectedClosureEvent && (
+        <ClosurePopover
+          map={mapRef.current}
+          location={selectedClosureEvent.coordinates}
+          event={selectedClosureEvent}
+          onClose={closeClosurePopover}
+        />
+      )}
       <NewsModal isOpen={isModalOpen} news={selectedNews} onClose={closeModal} />
     </>
   );

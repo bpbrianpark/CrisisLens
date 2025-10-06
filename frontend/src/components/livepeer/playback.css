@@ -13,9 +13,6 @@
     height: 100vh;
     background: transparent;
     z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .play-button {
@@ -47,18 +44,50 @@
 .player-container {
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: black;
+    position: relative;
 }
 
 .player-video {
-    width: 100vw;
-    height: 80vh;
+    width: 100%;
+    height: 100%;
     max-width: none;
     max-height: none;
     object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Mobile-specific adjustments for laptop-recorded streams */
+@media (max-width: 768px) {
+    .player {
+        /* Ensure the player takes full mobile screen */
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .player-root {
+        /* Ensure the root background covers full mobile screen */
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .player-container {
+        /* Ensure the container covers full mobile screen */
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .player-video {
+        /* Force the video to fill the entire mobile screen */
+        width: 100vw;
+        height: 100vh;
+        /* Center the video content and crop if necessary */
+        object-position: center;
+        /* Ensure it covers the full screen even if it means cropping */
+        object-fit: cover;
+    }
 }
 
 .close-button {
@@ -140,4 +169,56 @@
     padding: 8px 16px;
     border-radius: 20px;
     z-index: 999999;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.manual-play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: background-color 0.2s ease;
+}
+
+.manual-play-button:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Mobile adjustments for manual play button */
+@media (max-width: 768px) {
+    .manual-play-button {
+        /* Make the play button slightly larger on mobile for better touch interaction */
+        width: 100px;
+        height: 100px;
+        font-size: 32px;
+    }
+}
+
+/* Override body centering when video player is active */
+body:has(.player) {
+    display: block !important;
+    place-items: unset !important;
 }

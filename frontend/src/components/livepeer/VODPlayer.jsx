@@ -3,10 +3,12 @@ import { getSrc } from "@livepeer/react/external";
 import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
 import { useState, useEffect, useRef } from "react";
 import { Livepeer } from "livepeer";
+import PropTypes from "prop-types";
 
 import './playback.css'
 
-export const getPlaybackSource = async ({ playbackId }) => {
+// Helper function to get playback source
+const getPlaybackSource = async ({ playbackId }) => {
   try {
     const livepeer = new Livepeer({ apiKey: import.meta.env.VITE_LIVEPEER_API_KEY });
     const playbackInfo = await livepeer.playback.get(playbackId);
@@ -22,8 +24,8 @@ export default function VODPlayer({ playbackId, onClose }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
+  const [autoplayFailed, setAutoplayFailed] = useState(false);
   const mediaElementRef = useRef(null);
-  const autoPlayButtonRef = useRef(null);
 
   useEffect(() => {
     const loadPlaybackSource = async () => {
@@ -48,15 +50,28 @@ export default function VODPlayer({ playbackId, onClose }) {
     loadPlaybackSource();
   }, [playbackId]);
 
+  // Handle autoplay when video is ready
   useEffect(() => {
-    if (autoPlayButtonRef.current) {
-      const clickAutoPlayButton = () => {
-        autoPlayButtonRef.current.click();
+    if (mediaElementRef.current && src) {
+      const videoElement = mediaElementRef.current;
+      
+      const handleCanPlay = () => {
+        // Only attempt to play if the video is paused
+        if (videoElement.paused) {
+          videoElement.play().catch((error) => {
+            console.log("Autoplay prevented by browser:", error);
+            // This is normal - browsers often prevent autoplay
+            // Show the play button for manual start
+            setAutoplayFailed(true);
+          });
+        }
       };
-      clickAutoPlayButton();
-      const timeoutId = setTimeout(clickAutoPlayButton, 100);
 
-      return () => clearTimeout(timeoutId);
+      videoElement.addEventListener('canplay', handleCanPlay);
+      
+      return () => {
+        videoElement.removeEventListener('canplay', handleCanPlay);
+      };
     }
   }, [src]);
 
@@ -73,20 +88,23 @@ export default function VODPlayer({ playbackId, onClose }) {
     <div
       className="player"
     >
-      <button
-        ref={autoPlayButtonRef}
-        onClick={() => {
-          const playButton = document.querySelector('[aria-label="Play"]');
-          if (playButton) {
-            playButton.click();
-          }
-          if (mediaElementRef.current) {
-            mediaElementRef.current.play().catch((err) => console.error("Failed to play:", err));
-          }
-        }}
-        className="play-button"
-        aria-hidden="true"
-      />
+      {/* Manual play button for when autoplay fails */}
+      {autoplayFailed && (
+        <button
+          onClick={() => {
+            if (mediaElementRef.current) {
+              mediaElementRef.current.play().then(() => {
+                setAutoplayFailed(false);
+              }).catch((error) => {
+                console.error("Failed to play video:", error);
+              });
+            }
+          }}
+          className="manual-play-button"
+        >
+          ▶
+        </button>
+      )}
       <div
         className="player-root"
       />
@@ -94,7 +112,9 @@ export default function VODPlayer({ playbackId, onClose }) {
         src={src}
         onError={(error) => {
           console.error("Player error:", error);
-          setVideoError(error);
+          if (error && error !== null) {
+            setVideoError(error);
+          }
         }}
       >
         <Player.Container
@@ -106,10 +126,18 @@ export default function VODPlayer({ playbackId, onClose }) {
             autoPlay
             muted
             ref={mediaElementRef}
-            onError={(e) => console.error("Video element error:", e)}
+            onError={(e) => {
+              console.error("Video element error:", e);
+              // Only set error if it's a meaningful error
+              if (e && e.target && e.target.error) {
+                setVideoError(e.target.error);
+              }
+            }}
             onLoadStart={() => {}}
             onLoadedData={() => {}}
-            onPlay={() => {}}
+            onPlay={() => {
+              setAutoplayFailed(false);
+            }}
           />
           <button
             onClick={onClose}
@@ -161,3 +189,8 @@ export default function VODPlayer({ playbackId, onClose }) {
     </div>
   );
 }
+
+VODPlayer.propTypes = {
+  playbackId: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+};

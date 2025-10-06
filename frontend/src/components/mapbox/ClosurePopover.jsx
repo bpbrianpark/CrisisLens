@@ -16,7 +16,9 @@ function ClosurePopover({ map, location, event, onClose }) {
       }
       .custom-popup .mapboxgl-popup-content {
         padding: 0 !important;
-        border-radius: 8px !important;
+        border-radius: 14px !important;
+        background: transparent !important;
+        border: none !important;
       }
     `;
     document.head.appendChild(style);
@@ -24,15 +26,19 @@ function ClosurePopover({ map, location, event, onClose }) {
     const popoverElement = document.createElement("div");
     popoverElement.className = "closure-popover";
     popoverElement.style.cssText = `
-      position: absolute;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      width: 20rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      border-radius: 14px;
+      padding: 14px 14px 12px 14px;
+      box-shadow: 0 10px 30px rgba(2, 6, 23, 0.15);
+      backdrop-filter: saturate(140%) blur(6px);
+      width: 18rem;
       z-index: 1000;
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji";
       font-size: 14px;
     `;
 
@@ -40,99 +46,122 @@ function ClosurePopover({ map, location, event, onClose }) {
     closeButton.innerHTML = "×";
     closeButton.style.cssText = `
       position: absolute;
-      top: 5px;
+      top: 8px;
       right: 8px;
-      background: none;
-      border: none;
+      background: rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(17, 24, 39, 0.08);
       outline: none;
-      font-size: 18px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 16px;
+      line-height: 26px;
       cursor: pointer;
-      color: #666;
+      color: #374151;
       padding: 0;
       margin: 0;
-      box-shadow: none;
+      box-shadow: 0 1px 2px rgba(2, 6, 23, 0.06);
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
+      transition: background 120ms ease, transform 80ms ease;
     `;
+    closeButton.onmouseenter = () => {
+      closeButton.style.background = "rgba(15, 23, 42, 0.08)";
+    };
+    closeButton.onmouseleave = () => {
+      closeButton.style.background = "rgba(15, 23, 42, 0.04)";
+    };
     closeButton.onclick = onClose;
 
     const content = document.createElement("div");
     content.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    `;
+
+    const textCol = document.createElement("div");
+    textCol.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    `;
+
+    const title = document.createElement("div");
+    title.style.cssText = `
+      color: #0f172a;
+      letter-spacing: 0.1px;
+      text-align: center;
+      width: 100%;
+    `;
+    const headlineText = event.headline || "Traffic Advisory";
+    const sentences = headlineText
+      .split('.')
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (sentences.length > 0) {
+      sentences.forEach((s, idx) => {
+        const line = document.createElement('div');
+        line.style.cssText = `
+          margin: ${idx === 0 ? '0' : '2px 0 0 0'};
+          ${idx === 0 ? 'font-weight: 700;' : 'font-weight: 400;'}
+        `;
+        line.textContent = s + '.';
+        title.appendChild(line);
+      });
+    } else {
+      title.textContent = headlineText;
+    }
+
+    const pill = document.createElement("div");
+    pill.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #334155;
+      margin-top: 2px;
+    `;
+    const dot = document.createElement("span");
+    dot.style.cssText = `
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: ${event.status === "ACTIVE" ? "#10b981" : "#9ca3af"};
+      box-shadow: 0 0 0 3px ${event.status === "ACTIVE" ? "rgba(16,185,129,0.18)" : "rgba(156,163,175,0.18)"};
+    `;
+    const pillText = document.createElement("span");
+    const roadName = event.roadName || (event.roads && event.roads[0] && event.roads[0].name) || "Road Closure";
+    pillText.textContent = `${event.eventType || "Closure"} • ${roadName}`;
+    pill.appendChild(dot);
+    pill.appendChild(pillText);
+
+    const textColContainer = document.createElement("div");
+    textColContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
       text-align: center;
     `;
+    textCol.appendChild(title);
+    textCol.appendChild(pill);
+    textColContainer.appendChild(textCol);
 
-    const headline = document.createElement("div");
-    headline.style.cssText = `
-      margin-bottom: 8px;
-      color: #333;
-      line-height: 1.4;
-    `;
-    
-    const headlineText = event.headline || "No headline available";
-    const sentences = headlineText.split('.').filter(sentence => sentence.trim() !== '');
-    
-    if (sentences.length > 0) {
-      const firstSentence = document.createElement("div");
-      firstSentence.style.cssText = `
-        font-weight: bold;
-        margin-bottom: 4px;
-      `;
-      firstSentence.textContent = sentences[0].trim() + (sentences.length > 1 ? '.' : '');
-      headline.appendChild(firstSentence);
-      
-      for (let i = 1; i < sentences.length; i++) {
-        const sentence = document.createElement("div");
-        sentence.style.cssText = `
-          font-weight: normal;
-          margin-bottom: 4px;
-        `;
-        sentence.textContent = sentences[i].trim() + '.';
-        headline.appendChild(sentence);
-      }
-    } else {
-      headline.textContent = headlineText;
-    }
-
-    const roadsInfo = document.createElement("div");
-    roadsInfo.style.cssText = `
-    `;
-
-    if (event.roads && event.roads.length > 0) {
-      const roadsTitle = document.createElement("div");
-      roadsTitle.style.cssText = `
-        font-weight: bold;
-        margin-bottom: 4px;
-        color: #555;
-      `;
-      roadsTitle.textContent = "Road Information:";
-
-      roadsInfo.appendChild(roadsTitle);
-    } else {
-      roadsInfo.textContent = "No road information available";
-    }
-
-    const status = document.createElement("div");
-    status.style.cssText = `
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      display: inline-block;
-      background: ${event.status === "ACTIVE" ? "#ffeb3b" : "#e0e0e0"};
-      color: ${event.status === "ACTIVE" ? "#333" : "#666"};
-    `;
-    status.textContent = `${event.status || "Unknown"}`;
-
-    content.appendChild(headline);
-    content.appendChild(status);
+    content.appendChild(textColContainer);
     popoverElement.appendChild(closeButton);
     popoverElement.appendChild(content);
 
     const popup = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
-      offset: [0, 0], 
+      offset: [0, -6], 
       className: 'custom-popup', 
     })
       .setLngLat(location)

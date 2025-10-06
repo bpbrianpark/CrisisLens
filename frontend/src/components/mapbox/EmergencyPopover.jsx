@@ -16,7 +16,9 @@ function EmergencyPopover({ map, location, event, onClose }) {
       }
       .custom-emergency-popup .mapboxgl-popup-content {
         padding: 0 !important;
-        border-radius: 8px !important;
+        border-radius: 14px !important;
+        background: transparent !important;
+        border: none !important;
       }
     `;
     document.head.appendChild(style);
@@ -24,15 +26,19 @@ function EmergencyPopover({ map, location, event, onClose }) {
     const popoverElement = document.createElement("div");
     popoverElement.className = "emergency-popover";
     popoverElement.style.cssText = `
-      position: absolute;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      width: 16rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      border-radius: 14px;
+      padding: 14px 14px 12px 14px;
+      box-shadow: 0 10px 30px rgba(2, 6, 23, 0.15);
+      backdrop-filter: saturate(140%) blur(6px);
+      width: 18rem;
       z-index: 1000;
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, "Apple Color Emoji", "Segoe UI Emoji";
       font-size: 14px;
     `;
 
@@ -40,38 +46,98 @@ function EmergencyPopover({ map, location, event, onClose }) {
     closeButton.innerHTML = "×";
     closeButton.style.cssText = `
       position: absolute;
-      top: 5px;
+      top: 8px;
       right: 8px;
-      background: none;
-      border: none;
+      background: rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(17, 24, 39, 0.08);
       outline: none;
-      font-size: 18px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 16px;
+      line-height: 26px;
       cursor: pointer;
-      color: #666;
+      color: #374151;
       padding: 0;
       margin: 0;
-      box-shadow: none;
+      box-shadow: 0 1px 2px rgba(2, 6, 23, 0.06);
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
+      transition: background 120ms ease, transform 80ms ease;
     `;
+    closeButton.onmouseenter = () => {
+      closeButton.style.background = "rgba(15, 23, 42, 0.08)";
+    };
+    closeButton.onmouseleave = () => {
+      closeButton.style.background = "rgba(15, 23, 42, 0.04)";
+    };
     closeButton.onclick = onClose;
 
     const content = document.createElement("div");
     content.style.cssText = `
-      text-align: center;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
     `;
 
-    // Add emergency message
-    const emergencyMessage = document.createElement("div");
-    emergencyMessage.style.cssText = `
-      font-weight: bold;
-      color: #333;
-      line-height: 1.4;
+    const leadingIcon = document.createElement("div");
+    leadingIcon.style.cssText = `
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border: 1px solid rgba(220, 38, 38, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+      color: #991b1b;
+      font-size: 18px;
+      font-weight: 700;
     `;
-    emergencyMessage.textContent = "Emergency Responders in the Area";
+    leadingIcon.textContent = "!";
 
-    content.appendChild(emergencyMessage);
+    const textCol = document.createElement("div");
+    textCol.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    `;
+
+    const title = document.createElement("div");
+    title.style.cssText = `
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: 0.1px;
+    `;
+    title.textContent = "EMS in Area";
+
+    const pill = document.createElement("div");
+    pill.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #334155;
+    `;
+    const dot = document.createElement("span");
+    dot.style.cssText = `
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+    `;
+    const pillText = document.createElement("span");
+    pillText.textContent = event.callType || "Active response";
+    pill.appendChild(dot);
+    pill.appendChild(pillText);
+
+    textCol.appendChild(title);
+    textCol.appendChild(pill);
+    content.appendChild(leadingIcon);
+    content.appendChild(textCol);
     popoverElement.appendChild(closeButton);
     popoverElement.appendChild(content);
 

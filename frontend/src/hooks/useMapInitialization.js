@@ -11,9 +11,14 @@ export const useMapInitialization = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const initializeMap = (center) => {
+    const savedTheme = localStorage.getItem("crisisLensMapTheme") || "day";
+    const styleUrl = savedTheme === "night"
+      ? "mapbox://styles/mapbox/navigation-night-v1"
+      : "mapbox://styles/mapbox/navigation-day-v1";
+
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/navigation-day-v1",
+      style: styleUrl,
       center,
       zoom: 11,
     });

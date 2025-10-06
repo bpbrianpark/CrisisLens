@@ -18,6 +18,22 @@
     justify-content: center;
 }
 
+.player-embedded {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.player-loading {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .play-button {
     position: fixed;
     top: 0;

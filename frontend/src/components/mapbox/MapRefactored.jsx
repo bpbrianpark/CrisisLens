@@ -18,7 +18,7 @@ import { useNewsModal } from "../../hooks/useNewsModal";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
-  const { fireData, fireLocations } = useFireData(mapLoaded);
+  const { fireData, fireLocations } = useFireData();
   const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(fireLocations);
   const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
   const { showStream, selectedCluster, openStream, closeStream } = useStreamPlayer();

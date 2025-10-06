@@ -13,7 +13,7 @@ export const useMapInitialization = () => {
   const initializeMap = (center) => {
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/navigation-night-v1",
+      style: "mapbox://styles/mapbox/navigation-day-v1",
       center,
       zoom: 11,
     });

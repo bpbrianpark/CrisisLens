@@ -12,6 +12,7 @@ import { useMapInitialization } from "../../hooks/useMapInitialization";
 import { useFireData } from "../../hooks/useFireData";
 import { useNewsData } from "../../hooks/useNewsData";
 import { useFireClustering } from "../../hooks/useFireClustering";
+import { useNewsClustering } from "../../hooks/useNewsClustering";
 import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
@@ -23,6 +24,7 @@ function Map() {
   const { fireData, fireLocations } = useFireData(mapLoaded);
   const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(fireLocations);
   const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
+  const { newsClusters, updateNewsClusters } = useNewsClustering(newsLocations, newsArticlesForLocation, mapRef, mapLoaded);
   const { showStream, selectedCluster, openStream, closeStream } = useStreamPlayer();
   const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
@@ -39,6 +41,7 @@ function Map() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateClusters();
+        updateNewsClusters();
       }, 300);
     };
 
@@ -48,7 +51,7 @@ function Map() {
       currentMap.off("moveend", handleMoveEnd);
       clearTimeout(debounceTimeout);
     };
-  }, [mapLoaded, updateClusters, mapRef]);
+  }, [mapLoaded, updateClusters, updateNewsClusters, mapRef]);
 
   return (
     <>
@@ -94,12 +97,13 @@ function Map() {
       {/* News Markers */}
       {mapLoaded &&
         newsLoaded &&
-        Object.entries(newsLocations).map(([locationName, coordinates], index) => (
+        newsClusters.map((cluster, index) => (
           <NewsMarker
-            key={index}
+            key={`news-${index}`}
             map={mapRef.current}
-            location={coordinates}
-            news={newsArticlesForLocation[locationName]}
+            location={cluster.center}
+            news={cluster.locations.flatMap(location => location.articles)}
+            count={cluster.locations.length}
             onClick={(news) => openModal(news)}
           />
         ))}

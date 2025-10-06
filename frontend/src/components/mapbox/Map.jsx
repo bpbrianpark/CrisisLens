@@ -2,16 +2,16 @@ import { useEffect } from "react";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import StreamPlayer from "../livepeer/StreamPlayer";
-import FireMarker from "./FireMarker";
+import CrisisMarker from "./CrisisMarker";
 import NewsMarker from "./NewsMarker";
 import ClosureMarker from "./ClosureMarker";
 import ClosurePopover from "./ClosurePopover";
 import NewsModal from "../NewsModal";
 import VODPlayer from "../livepeer/VODPlayer";
 import { useMapInitialization } from "../../hooks/useMapInitialization";
-import { useFireData } from "../../hooks/useFireData";
+import { useCrisisData } from "../../hooks/useCrisisData";
 import { useNewsData } from "../../hooks/useNewsData";
-import { useFireClustering } from "../../hooks/useFireClustering";
+import { useCrisisClustering } from "../../hooks/useCrisisClustering";
 import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
@@ -20,15 +20,15 @@ import { useClosurePopover } from "../../hooks/useClosurePopover";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
-  const { fireData, fireLocations } = useFireData(mapLoaded);
-  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(fireLocations);
-  const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
+  const { crisisData, crisisLocations } = useCrisisData(mapLoaded);
+  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(crisisLocations);
+  const { crisesClusters, updateClusters } = useCrisisClustering(crisisData, mapRef, mapLoaded);
   const { showStream, selectedCluster, openStream, closeStream } = useStreamPlayer();
   const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
 
-  useMapLayers(fireData, mapRef, mapLoaded);
+  useMapLayers(crisisData, mapRef, mapLoaded);
 
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
@@ -75,15 +75,15 @@ function Map() {
       {/* Map Container */}
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
 
-      {/* Fire Markers */}
+      {/* Crisis Markers */}
       {mapLoaded &&
-        fireClusters.map((cluster, index) => (
-          <FireMarker
+        crisesClusters.map((cluster, index) => (
+          <CrisisMarker
             key={index}
             map={mapRef.current}
             location={cluster.center}
             count={cluster.fires.length}
-            fires={cluster.fires}
+            crises={cluster.fires}
             onClick={() => {
               openStream(cluster);
               console.log(cluster);

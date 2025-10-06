@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import PropTypes from "prop-types";
 
-function FireMarker({ map, location, count = 1, onClick, fires }) {
+function CrisisMarker({ map, location, count = 1, onClick, crises }) {
   useEffect(() => {
     if (!map || !location || location.length !== 2) {
       console.error("Map or location is invalid:", { map, location });
@@ -33,21 +33,19 @@ function FireMarker({ map, location, count = 1, onClick, fires }) {
       markerElement.appendChild(countBadge);
     }
 
-    const marker = new mapboxgl.Marker(markerElement)
-      .setLngLat(location)
-      .addTo(map);
+    const marker = new mapboxgl.Marker(markerElement).setLngLat(location).addTo(map);
 
     if (onClick) {
-      markerElement.addEventListener("click", () => onClick(fires));
+      markerElement.addEventListener("click", () => onClick(crises));
     }
 
     return () => marker.remove();
-  }, [map, location, count, onClick, fires]);
+  }, [map, location, count, onClick, crises]);
 
   return null;
 }
 
-FireMarker.propTypes = {
+CrisisMarker.propTypes = {
   map: PropTypes.object.isRequired,
   location: PropTypes.arrayOf(PropTypes.number).isRequired,
   count: PropTypes.number,
@@ -55,4 +53,4 @@ FireMarker.propTypes = {
   fires: PropTypes.arrayOf(PropTypes.object),
 };
 
-export default FireMarker;
+export default CrisisMarker;

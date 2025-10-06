@@ -9,11 +9,12 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [streamData, setStreamData] = useState(null);
 
-  const handleStartStream = async ({ latitude, longitude }) => {
+  const handleStartStream = async ({ latitude, longitude, crisis }) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/livepeer/create`, {
         latitude,
-        longitude
+        longitude,
+        crisis,
       });
       const { data } = response.data;
       setStreamData(data);

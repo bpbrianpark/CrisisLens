@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 
-export const useFireClustering = (fireData, mapRef) => {
-  const [fireClusters, setFireClusters] = useState([]);
+export const useCrisisClustering = (crisisData, mapRef) => {
+  const [crisesClusters, setCrisesClusters] = useState([]);
 
-  const clusterFires = (locations, zoom) => {
+  const clusterCrises = (locations, zoom) => {
     const zoomFactor = 0.01 / Math.pow(2, zoom - 10);
     const clusters = [];
 
@@ -36,21 +36,21 @@ export const useFireClustering = (fireData, mapRef) => {
   };
 
   const updateClusters = useCallback(() => {
-    if (!mapRef.current || fireData.length === 0) return;
+    if (!mapRef.current || crisisData.length === 0) return;
 
     const zoom = mapRef.current.getZoom();
-    const clusters = clusterFires(fireData, zoom);
-    setFireClusters(clusters);
-  }, [fireData, mapRef]);
+    const clusters = clusterCrises(crisisData, zoom);
+    setCrisesClusters(clusters);
+  }, [crisisData, mapRef]);
 
   useEffect(() => {
-    if (fireData.length > 0) {
+    if (crisisData.length > 0) {
       updateClusters();
     }
-  }, [fireData, updateClusters]);
+  }, [crisisData, updateClusters]);
 
   return {
-    fireClusters,
+    crisesClusters,
     updateClusters,
   };
 };

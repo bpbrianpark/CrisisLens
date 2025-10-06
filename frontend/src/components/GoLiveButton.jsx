@@ -15,7 +15,7 @@ const GoLiveButton = ({ handleStartStream }) => {
 
           try {
             console.debug("BUTTON PRESSED");
-            await handleStartStream({ latitude, longitude });
+            await handleStartStream({ latitude, longitude, crisis: "fire" });
           } catch (error) {
             console.error("Error starting stream:", error);
             alert("Failed to start stream. Please try again.");

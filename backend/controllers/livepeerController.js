@@ -62,13 +62,14 @@ export default class LivepeerController {
     let latitude = null;
     let longitude = null;
     let streamId = null;
-    
+    let crisis = "general";
+
     if (asset.snapshot?.source?.sessionId) {
       try {
         // Fetch session data to get parentId (which is the stream ID)
         const sessionData = await this.fetchSession(asset.snapshot.source.sessionId);
         streamId = sessionData.parentId;
-        
+
         // Get location data from the livestream document using the stream ID
         if (streamId) {
           const livestreamDoc = await this.db.collection("livestreams").doc(streamId).get();
@@ -76,6 +77,7 @@ export default class LivepeerController {
             const livestreamData = livestreamDoc.data();
             latitude = livestreamData.latitude;
             longitude = livestreamData.longitude;
+            crisis = livestreamData.crisis || "general";
           }
         }
       } catch (error) {
@@ -87,16 +89,18 @@ export default class LivepeerController {
           latitude = livestreamData.latitude;
           longitude = livestreamData.longitude;
           streamId = asset.snapshot.source.sessionId;
+          crisis = livestreamData.crisis || "general";
         }
       }
     }
-    
+
     await this.db.collection("assets").doc(asset.id).set({
       assetId: asset.id,
       title: "",
       name: asset.snapshot?.name || "",
       latitude: latitude,
       longitude: longitude,
+      crisis: crisis || "general",
       playbackId: asset.snapshot?.playbackId || "",
       downloadUrl: asset.snapshot?.downloadUrl || "",
       playbackUrl: asset.snapshot?.playbackUrl || "",
@@ -112,7 +116,7 @@ export default class LivepeerController {
       projectId: asset.snapshot?.projectId || null,
     });
     console.log(`Created Firestore document for asset ${asset.id}`);
-    
+
     // Delete the livestream document using the correct stream ID
     if (streamId) {
       await this.db.collection("livestreams").doc(streamId).delete();
@@ -127,12 +131,12 @@ export default class LivepeerController {
         Authorization: `Bearer ${this.apiKey}`,
       },
     });
-    
+
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Failed to fetch session: ${response.status} ${text}`);
     }
-    
+
     return response.json();
   }
 }

@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
-export const useFireData = (mapLoaded) => {
-  const [fireData, setFireData] = useState([]);
-  const [fireLocations, setFireLocations] = useState([]);
+export const useCrisisData = (mapLoaded) => {
+  const [crisisData, setCrisisData] = useState([]);
+  const [crisisLocations, setCrisisLocations] = useState([]);
 
   const processFireData = (livestreams, assets) => {
     const activeLivestreams = livestreams
-      .filter((stream) => 
-        stream.status !== "finished" && 
-        stream.longitude != null && 
+      .filter((stream) =>
+        stream.status !== "finished" &&
+        stream.longitude != null &&
         stream.latitude != null &&
         typeof stream.longitude === 'number' &&
         typeof stream.latitude === 'number'
@@ -22,9 +22,9 @@ export const useFireData = (mapLoaded) => {
       }));
 
     const readyAssets = assets
-      .filter((asset) => 
-        asset.status === "ready" && 
-        asset.longitude != null && 
+      .filter((asset) =>
+        asset.status === "ready" &&
+        asset.longitude != null &&
         asset.latitude != null &&
         typeof asset.longitude === 'number' &&
         typeof asset.latitude === 'number'
@@ -36,8 +36,8 @@ export const useFireData = (mapLoaded) => {
       }));
 
     const fires = [...activeLivestreams, ...readyAssets];
-    setFireData(fires);
-    setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
+    setCrisisData(fires);
+    setCrisisLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
   };
 
   useEffect(() => {
@@ -92,7 +92,7 @@ export const useFireData = (mapLoaded) => {
   }, [mapLoaded]);
 
   return {
-    fireData,
-    fireLocations,
+    crisisData,
+    crisisLocations,
   };
 };

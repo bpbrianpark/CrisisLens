@@ -27,8 +27,7 @@ export const useNewsData = (fireLocations) => {
   const getCoordinatesForLocation = async (locationName) => {
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?access_token=${
-          import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
         }&types=place,locality,neighborhood`
       );
       const data = await response.json();
@@ -46,14 +45,15 @@ export const useNewsData = (fireLocations) => {
   const fetchNewsForLocation = async (location) => {
     try {
       console.log(`🔍 Fetching news for location: ${location}`);
+      // TODO: Update query for crisis category
       const query = encodeURIComponent(`${location} + (fire OR wildfire OR burning)`);
 
       const response = await fetch(
         `https://api.thenewsapi.com/v1/news/all?` +
-          `api_token=${NEWS_API_KEY}&` +
-          `search=${query}&` +
-          `limit=3&` +
-          `sort=published_at`
+        `api_token=${NEWS_API_KEY}&` +
+        `search=${query}&` +
+        `limit=3&` +
+        `sort=published_at`
       );
 
       const data = await response.json();

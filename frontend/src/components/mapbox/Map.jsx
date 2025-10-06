@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
@@ -44,6 +44,8 @@ function Map() {
   const [trafficLoaded, setTrafficLoaded] = useState(false);
   const [trafficLocations, setTrafficLocations] = useState([]);
   const [selectedClosureEvent, setSelectedClosureEvent] = useState(null);
+  const [newsCache, setNewsCache] = useState({});
+  const [isNewsFetching, setIsNewsFetching] = useState(false);
 
   const openModal = (news) => {
     setSelectedNews(news);
@@ -70,12 +72,38 @@ function Map() {
         longitude: doc.data().longitude,
         latitude: doc.data().latitude,
         ...doc.data(),
+  const processFireData = (livestreams, assets) => {
+    const activeLivestreams = livestreams
+      .filter((stream) => 
+        stream.status !== "finished" && 
+        stream.longitude != null && 
+        stream.latitude != null &&
+        typeof stream.longitude === 'number' &&
+        typeof stream.latitude === 'number'
+      )
+      .map((stream) => ({
+        ...stream,
+        isLiveStream: true,
+        isOnGoing: true,
       }));
-      setFireData(fires);
-      setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
-    } catch (error) {
-      console.error("Error fetching fire data:", error);
-    }
+
+    const readyAssets = assets
+      .filter((asset) => 
+        asset.status === "ready" && 
+        asset.longitude != null && 
+        asset.latitude != null &&
+        typeof asset.longitude === 'number' &&
+        typeof asset.latitude === 'number'
+      )
+      .map((asset) => ({
+        ...asset,
+        isLiveStream: false,
+        isOnGoing: false,
+      }));
+
+    const fires = [...activeLivestreams, ...readyAssets];
+    setFireData(fires);
+    setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
   };
 
   const fetchTrafficData = async () => {
@@ -146,9 +174,28 @@ function Map() {
       }
 
       geolocateControl.on("geolocate", (e) => {
-        const { longitude, latitude } = e.coords;
-        setUserLocation([longitude, latitude]);
-        mapRef.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+        try {
+          let longitude, latitude;
+          
+          if (e.target.options && e.target.options.geolocation) {
+            const geolocation = e.target.options.geolocation;
+            if (geolocation.coords) {
+              longitude = geolocation.coords.longitude;
+              latitude = geolocation.coords.latitude;
+            }
+          }
+          
+          if (!longitude || !latitude) {
+            const { longitude: lng, latitude: lat } = e.target._lastKnownPosition.coords;
+            longitude = lng;
+            latitude = lat;
+          }
+          
+          setUserLocation([longitude, latitude]);
+          mapRef.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+        } catch (error) {
+          console.error("Error handling geolocate event:", error);
+        }
       });
 
       mapRef.current.on("load", () => {
@@ -210,6 +257,51 @@ function Map() {
     return () => {
       clearInterval(fireIntervalId);
       clearInterval(trafficIntervalId);
+    let livestreamsData = [];
+    let assetsData = [];
+
+    const updateFireData = () => {
+      processFireData(livestreamsData, assetsData);
+    };
+
+    // Set up real-time listeners for livestreams
+    const livestreamsUnsubscribe = onSnapshot(
+      collection(db, "livestreams"),
+      (snapshot) => {
+        livestreamsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          longitude: doc.data().longitude,
+          latitude: doc.data().latitude,
+          ...doc.data(),
+        }));
+        updateFireData();
+      },
+      (error) => {
+        console.error("Error listening to livestreams:", error);
+      }
+    );
+
+    // Set up real-time listeners for assets
+    const assetsUnsubscribe = onSnapshot(
+      collection(db, "assets"),
+      (snapshot) => {
+        assetsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          longitude: doc.data().longitude,
+          latitude: doc.data().latitude,
+          ...doc.data(),
+        }));
+        updateFireData();
+      },
+      (error) => {
+        console.error("Error listening to assets:", error);
+      }
+    );
+
+    // Clean up listeners on unmount
+    return () => {
+      livestreamsUnsubscribe();
+      assetsUnsubscribe();
     };
   }, [mapLoaded]);
 
@@ -246,13 +338,7 @@ function Map() {
   };
 
   const updateClusters = () => {
-    if (!mapRef.current) return;
-
-    if (fireData.length === 0) {
-      fetchFireData();
-    }
-
-    if (fireData.length === 0) return;
+    if (!mapRef.current || fireData.length === 0) return;
 
     const zoom = mapRef.current.getZoom();
     const clusters = clusterFires(fireData, zoom);
@@ -327,23 +413,49 @@ function Map() {
   };
 
   const updateNewsArticles = async () => {
-    if (!locationKeywords.size) return;
+    if (!locationKeywords.size || isNewsFetching) return;
 
-    const articlesMap = {};
+    // Check if we already have all the articles we need
+    const neededLocations = Array.from(locationKeywords).filter(location => !newsCache[location]);
+    if (neededLocations.length === 0) {
+      // All articles are already cached, just update the display
+      const articlesMap = {};
+      for (const location of locationKeywords) {
+        articlesMap[location] = newsCache[location];
+      }
+      setNewsArticlesForLocation(articlesMap);
+      setNewsLoaded(true);
+      return;
+    }
+
+    setIsNewsFetching(true);
+    const articlesMap = { ...newsArticlesForLocation };
 
     for (const location of locationKeywords) {
+      // Check if we already have articles for this location
+      if (newsCache[location]) {
+        console.log(`📦 Using cached news for location: ${location}`);
+        articlesMap[location] = newsCache[location];
+        continue;
+      }
+
+      // Only fetch if not already cached
       const articles = await fetchNewsForLocation(location);
       if (articles) {
         articlesMap[location] = articles;
+        // Cache the articles
+        setNewsCache(prev => ({ ...prev, [location]: articles }));
       }
     }
 
     setNewsArticlesForLocation(articlesMap);
     setNewsLoaded(true);
+    setIsNewsFetching(false);
   };
 
   const fetchNewsForLocation = async (location) => {
     try {
+      console.log(`🔍 Fetching news for location: ${location}`);
       const query = encodeURIComponent(`${location} + (fire OR wildfire OR burning)`);
 
       const response = await fetch(
@@ -399,10 +511,10 @@ function Map() {
   }, [locationKeywords]);
 
   useEffect(() => {
-    if (newsLocations && Object.keys(newsLocations).length > 0) {
+    if (newsLocations && Object.keys(newsLocations).length > 0 && !isNewsFetching) {
       updateNewsArticles();
     }
-  }, [newsLocations]);
+  }, [newsLocations, isNewsFetching]);
 
   useEffect(() => {
     if (fireData.length > 0) {

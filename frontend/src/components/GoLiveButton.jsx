@@ -1,21 +1,21 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import CrisisTypeModal from "./CrisisTypeModal";
 import "../App.css";
 
 const GoLiveButton = ({ handleStartStream }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const handleClick = async () => {
+  const handleClick = async (typeId) => {
     setIsLoading(true);
-    console.debug("BUTTON HERE");
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
 
           try {
-            console.debug("BUTTON PRESSED");
-            await handleStartStream({ latitude, longitude, crisis: "fire" });
+            await handleStartStream({ latitude, longitude, crisis: typeId });
           } catch (error) {
             console.error("Error starting stream:", error);
             alert("Failed to start stream. Please try again.");
@@ -55,16 +55,26 @@ const GoLiveButton = ({ handleStartStream }) => {
   };
 
   return (
-    <button
-      className="record-button"
-      onClick={() => {
-        console.debug("HERE");
-        handleClick();
-      }}
-      disabled={isLoading}
-    >
-      Record Now
-    </button>
+    <>
+      <button
+        className="record-button"
+        onClick={() => {
+          open ? setOpen(false) : setOpen(true);
+        }}
+        disabled={isLoading}
+      >
+        {open ? "Cancel" : "Record Now"}
+      </button>
+      <CrisisTypeModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onConfirm={(typeId) => {
+          handleClick(typeId);
+          setOpen(false);
+        }}
+        defaultType="fire"
+      />
+    </>
   );
 };
 

@@ -15,6 +15,7 @@ export default class LivepeerController {
   }
 
   createStream() {
+    console.log("Creating new stream with Livepeer API...");
     const streamData = {
       name: uuidv4(),
       record: true,
@@ -42,6 +43,7 @@ export default class LivepeerController {
   }
 
   endStream(streamId) {
+    console.log(`Ending stream with ID ${streamId}...`);
     return this.client.stream
       .delete(streamId)
       .then(() => {
@@ -55,6 +57,7 @@ export default class LivepeerController {
 
   // Webhook helper for asset.ready events
   async handleAssetReady(asset) {
+    console.log(`Processing asset.ready webhook for asset ID ${asset.id}...`);
     if (!asset?.id) {
       throw new Error("Asset ID is required");
     }

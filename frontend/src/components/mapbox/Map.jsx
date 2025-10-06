@@ -141,9 +141,28 @@ function Map() {
       }
 
       geolocateControl.on("geolocate", (e) => {
-        const { longitude, latitude } = e.coords;
-        setUserLocation([longitude, latitude]);
-        mapRef.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+        try {
+          let longitude, latitude;
+          
+          if (e.target.options && e.target.options.geolocation) {
+            const geolocation = e.target.options.geolocation;
+            if (geolocation.coords) {
+              longitude = geolocation.coords.longitude;
+              latitude = geolocation.coords.latitude;
+            }
+          }
+          
+          if (!longitude || !latitude) {
+            const { longitude: lng, latitude: lat } = e.target._lastKnownPosition.coords;
+            longitude = lng;
+            latitude = lat;
+          }
+          
+          setUserLocation([longitude, latitude]);
+          mapRef.current.flyTo({ center: [longitude, latitude], zoom: 14 });
+        } catch (error) {
+          console.error("Error handling geolocate event:", error);
+        }
       });
 
       mapRef.current.on("load", () => {

@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
-import "./news-modal.css";
+import "./NewsModal.css";
 
 function NewsModal({ isOpen, news, onClose, locationName }) {
   const [shouldRender, setShouldRender] = useState(false);

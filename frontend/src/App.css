@@ -152,23 +152,6 @@
   border-top-color: #667eea !important;
 }
 
-.record-button {
-  position: absolute;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #ff4444;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 25px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 999;
-}
-
 .stream-overlay {
   position: fixed;
   top: 0;

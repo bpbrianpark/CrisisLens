@@ -1,20 +1,18 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import "../App.css";
+import "./GoLiveButton.css";
 
 const GoLiveButton = ({ handleStartStream }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
     setIsLoading(true);
-    console.debug("BUTTON HERE");
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
 
           try {
-            console.debug("BUTTON PRESSED");
             await handleStartStream({ latitude, longitude });
           } catch (error) {
             console.error("Error starting stream:", error);
@@ -58,12 +56,11 @@ const GoLiveButton = ({ handleStartStream }) => {
     <button
       className="record-button"
       onClick={() => {
-        console.debug("HERE");
         handleClick();
       }}
       disabled={isLoading}
     >
-      Record Now
+      {isLoading ? "Starting..." : "Record Now"}
     </button>
   );
 };

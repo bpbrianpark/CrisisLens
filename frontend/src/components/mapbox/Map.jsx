@@ -4,10 +4,10 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import StreamPlayer from "../livepeer/StreamPlayer";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
+import ClosureMarker from "./ClosureMarker";
+import ClosurePopover from "./ClosurePopover";
 import NewsModal from "../NewsModal";
 import VODPlayer from "../livepeer/VODPlayer";
-
-// Custom hooks
 import { useMapInitialization } from "../../hooks/useMapInitialization";
 import { useFireData } from "../../hooks/useFireData";
 import { useNewsData } from "../../hooks/useNewsData";
@@ -15,6 +15,8 @@ import { useFireClustering } from "../../hooks/useFireClustering";
 import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
+import { useTrafficData } from "../../hooks/useTrafficData";
+import { useClosurePopover } from "../../hooks/useClosurePopover";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
@@ -23,6 +25,8 @@ function Map() {
   const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
   const { showStream, selectedCluster, openStream, closeStream } = useStreamPlayer();
   const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
+  const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
+  const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
 
   useMapLayers(fireData, mapRef, mapLoaded);
 
@@ -99,6 +103,29 @@ function Map() {
             onClick={(news) => openModal(news)}
           />
         ))}
+
+      {/* Traffic Closure Markers */}
+      {mapLoaded &&
+        trafficLoaded &&
+        trafficLocations.map((event, index) => (
+          <ClosureMarker
+            key={index}
+            map={mapRef.current}
+            location={event.coordinates}
+            event={event}
+            onClick={openClosurePopover}
+          />
+        ))}
+
+      {/* Closure Popover */}
+      {selectedClosureEvent && (
+        <ClosurePopover
+          map={mapRef.current}
+          location={selectedClosureEvent.coordinates}
+          event={selectedClosureEvent}
+          onClose={closeClosurePopover}
+        />
+      )}
 
       {/* News Modal */}
       <NewsModal isOpen={isModalOpen} news={selectedNews} onClose={closeModal} />

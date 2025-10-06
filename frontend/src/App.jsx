@@ -1,9 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
 import Map from "./components/mapbox/Map";
-import "./App.css";
-import GoLiveButton from "./components/GoLiveButton";
+import GoLiveButton from "./components/GoLiveButton/GoLiveButton";
 import StreamBroadcast from "./components/livepeer/StreamBroadcast";
+
+import "./App.css";
 
 export default function App() {
   const [loading, setLoading] = useState(false);
@@ -13,7 +14,7 @@ export default function App() {
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/livepeer/create`, {
         latitude,
-        longitude
+        longitude,
       });
       const { data } = response.data;
       setStreamData(data);

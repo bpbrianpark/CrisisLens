@@ -1,13 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
-import StreamPlayer from "../livepeer/StreamPlayer";
 import FireMarker from "./FireMarker";
 import NewsMarker from "./NewsMarker";
 import ClosureMarker from "./ClosureMarker";
 import ClosurePopover from "./ClosurePopover";
-import NewsModal from "../NewsModal";
-import VODPlayer from "../livepeer/VODPlayer";
+import NewsModal from "../NewsModal/NewsModal";
+import VideoScroll from "../VideoScroll/VideoScroll";
 import { useMapInitialization } from "../../hooks/useMapInitialization";
 import { useFireData } from "../../hooks/useFireData";
 import { useNewsData } from "../../hooks/useNewsData";
@@ -17,16 +16,20 @@ import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
 import { useTrafficData } from "../../hooks/useTrafficData";
 import { useClosurePopover } from "../../hooks/useClosurePopover";
+import { useVideoScroll } from "../../hooks/useVideoScroll";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
   const { fireData, fireLocations } = useFireData(mapLoaded);
   const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(fireLocations);
   const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
-  const { showStream, selectedCluster, openStream, closeStream } = useStreamPlayer();
+  const { closeStream } = useStreamPlayer();
   const { selectedNews, isModalOpen, openModal, closeModal } = useNewsModal();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
+  const [mapCenter, setMapCenter] = useState(null);
+  const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
+    useVideoScroll(fireData, mapCenter, closeStream);
 
   useMapLayers(fireData, mapRef, mapLoaded);
 
@@ -34,12 +37,17 @@ function Map() {
     if (!mapRef.current || !mapLoaded) return;
 
     const currentMap = mapRef.current;
+    const c = currentMap.getCenter();
+    setMapCenter({ latitude: c.lat, longitude: c.lng });
+
     let debounceTimeout = null;
     const handleMoveEnd = () => {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateClusters();
-      }, 300);
+        const center = currentMap.getCenter();
+        setMapCenter({ latitude: center.lat, longitude: center.lng });
+      }, 150);
     };
 
     currentMap.on("moveend", handleMoveEnd);
@@ -52,30 +60,8 @@ function Map() {
 
   return (
     <>
-      {/* Stream Player Overlay */}
-      {showStream && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            zIndex: 99999,
-          }}
-        >
-          {selectedCluster.fires[0].isLiveStream ? (
-            <StreamPlayer selectedCluster={selectedCluster} onClose={closeStream} />
-          ) : (
-            <VODPlayer playbackId={selectedCluster.fires[0].playbackId} onClose={closeStream} />
-          )}
-        </div>
-      )}
-
-      {/* Map Container */}
       <div id="map-container" ref={mapContainerRef} style={{ height: "100vh" }} />
 
-      {/* Fire Markers */}
       {mapLoaded &&
         fireClusters.map((cluster, index) => (
           <FireMarker
@@ -85,13 +71,12 @@ function Map() {
             count={cluster.fires.length}
             fires={cluster.fires}
             onClick={() => {
-              openStream(cluster);
+              openVideoScroll(0);
               console.log(cluster);
             }}
           />
         ))}
 
-      {/* News Markers */}
       {mapLoaded &&
         newsLoaded &&
         Object.entries(newsLocations).map(([locationName, coordinates], index) => (
@@ -104,7 +89,6 @@ function Map() {
           />
         ))}
 
-      {/* Traffic Closure Markers */}
       {mapLoaded &&
         trafficLoaded &&
         trafficLocations.map((event, index) => (
@@ -117,7 +101,6 @@ function Map() {
           />
         ))}
 
-      {/* Closure Popover */}
       {selectedClosureEvent && (
         <ClosurePopover
           map={mapRef.current}
@@ -127,8 +110,16 @@ function Map() {
         />
       )}
 
-      {/* News Modal */}
       <NewsModal isOpen={isModalOpen} news={selectedNews} onClose={closeModal} />
+
+      {showVideoScroll && (
+        <VideoScroll
+          videos={filteredVideos}
+          currentVideoIndex={currentVideoIndex}
+          onVideoChange={changeVideo}
+          onClose={closeVideoScroll}
+        />
+      )}
     </>
   );
 }

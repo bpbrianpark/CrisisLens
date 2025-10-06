@@ -1,18 +1,13 @@
 import React from "react";
-
-import "./news-modal.css";
+import "./NewsModal.css";
 
 function NewsModal({ isOpen, news, onClose }) {
   if (!isOpen || !news || news.length === 0) return null;
 
   return (
     <div className="modal-backdrop">
-      <div
-        className="modal"
-      >
-        <div
-          className="modal-header"
-        >
+      <div className="modal">
+        <div className="modal-header">
           <h2 className="modal-title">Recent Local News</h2>
           <button
             onClick={onClose}

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Livepeer } from "livepeer";
 import PropTypes from "prop-types";
 
-import './playback.css'
+import "./playback.css";
 
 // Helper function to get playback source
 const getPlaybackSource = async ({ playbackId }) => {
@@ -20,7 +20,7 @@ const getPlaybackSource = async ({ playbackId }) => {
   }
 };
 
-export default function VODPlayer({ playbackId, onClose }) {
+export default function VODPlayer({ playbackId, onClose, srcOverride, isEmbedded = false }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
@@ -31,7 +31,11 @@ export default function VODPlayer({ playbackId, onClose }) {
     const loadPlaybackSource = async () => {
       try {
         setLoading(true);
-        const playbackUrl = await getPlaybackSource({playbackId});
+        if (srcOverride) {
+          setSrc(srcOverride);
+          return;
+        }
+        const playbackUrl = await getPlaybackSource({ playbackId });
 
         if (playbackUrl) {
           setSrc(playbackUrl);
@@ -48,13 +52,13 @@ export default function VODPlayer({ playbackId, onClose }) {
     };
 
     loadPlaybackSource();
-  }, [playbackId]);
+  }, [playbackId, srcOverride]);
 
   // Handle autoplay when video is ready
   useEffect(() => {
     if (mediaElementRef.current && src) {
       const videoElement = mediaElementRef.current;
-      
+
       const handleCanPlay = () => {
         // Only attempt to play if the video is paused
         if (videoElement.paused) {
@@ -67,15 +71,15 @@ export default function VODPlayer({ playbackId, onClose }) {
         }
       };
 
-      videoElement.addEventListener('canplay', handleCanPlay);
-      
+      videoElement.addEventListener("canplay", handleCanPlay);
+
       return () => {
-        videoElement.removeEventListener('canplay', handleCanPlay);
+        videoElement.removeEventListener("canplay", handleCanPlay);
       };
     }
   }, [src]);
 
-  if (loading) return <p>Loading player...</p>;
+  if (loading) return <div className="player-loading"></div>;
   if (!src)
     return (
       <div className="playback-error-message">
@@ -85,19 +89,20 @@ export default function VODPlayer({ playbackId, onClose }) {
     );
 
   return (
-    <div
-      className="player"
-    >
+    <div className={`player ${isEmbedded ? "player-embedded" : ""}`}>
       {/* Manual play button for when autoplay fails */}
       {autoplayFailed && (
         <button
           onClick={() => {
             if (mediaElementRef.current) {
-              mediaElementRef.current.play().then(() => {
-                setAutoplayFailed(false);
-              }).catch((error) => {
-                console.error("Failed to play video:", error);
-              });
+              mediaElementRef.current
+                .play()
+                .then(() => {
+                  setAutoplayFailed(false);
+                })
+                .catch((error) => {
+                  console.error("Failed to play video:", error);
+                });
             }
           }}
           className="manual-play-button"
@@ -105,9 +110,7 @@ export default function VODPlayer({ playbackId, onClose }) {
           ▶
         </button>
       )}
-      <div
-        className="player-root"
-      />
+      <div className="player-root" />
       <Player.Root
         src={src}
         onError={(error) => {
@@ -117,14 +120,14 @@ export default function VODPlayer({ playbackId, onClose }) {
           }
         }}
       >
-        <Player.Container
-          className="player-container"
-        >
+        <Player.Container className="player-container">
           <Player.Video
             title="Livestream"
             className="player-video"
             autoPlay
-            muted
+            loop
+            playsInline
+            preload="auto"
             ref={mediaElementRef}
             onError={(e) => {
               console.error("Video element error:", e);
@@ -138,16 +141,22 @@ export default function VODPlayer({ playbackId, onClose }) {
             onPlay={() => {
               setAutoplayFailed(false);
             }}
+            onEnded={() => {
+              // Ensure video restarts when it ends (backup for loop attribute)
+              if (mediaElementRef.current) {
+                mediaElementRef.current.currentTime = 0;
+                mediaElementRef.current.play().catch((error) => {
+                  console.log("Failed to restart video:", error);
+                });
+              }
+            }}
           />
-          <button
-            onClick={onClose}
-            className="close-button"
-          >
-            Close
-          </button>
-          <Player.Controls
-            className="controls"
-          >
+          {!isEmbedded && (
+            <button onClick={onClose} className="close-button">
+              Close
+            </button>
+          )}
+          <Player.Controls className="controls">
             <Player.PlayPauseTrigger className="pause-trigger">
               <Player.PlayingIndicator asChild matcher={false}>
                 <PlayIcon className="player-icon" />
@@ -158,34 +167,22 @@ export default function VODPlayer({ playbackId, onClose }) {
             </Player.PlayPauseTrigger>
           </Player.Controls>
 
-          <Player.LoadingIndicator asChild>
-            <div
-              className="loading-indicator"
-            >
-              Loading clip...
-            </div>
-          </Player.LoadingIndicator>
+          {!isEmbedded && (
+            <Player.LoadingIndicator asChild>
+              <div className="loading-indicator">Loading clip...</div>
+            </Player.LoadingIndicator>
+          )}
 
           <Player.LiveIndicator>
-            <div
-              className="live-indicator-container"
-            >
-              <div
-                className='live-indicator'
-              />
+            <div className="live-indicator-container">
+              <div className="live-indicator" />
               LIVE
             </div>
           </Player.LiveIndicator>
         </Player.Container>
       </Player.Root>
 
-      {videoError && (
-        <div
-          className="playback-error"
-        >
-          Error: {JSON.stringify(videoError)}
-        </div>
-      )}
+      {videoError && <div className="playback-error">Error: {JSON.stringify(videoError)}</div>}
     </div>
   );
 }
@@ -193,4 +190,6 @@ export default function VODPlayer({ playbackId, onClose }) {
 VODPlayer.propTypes = {
   playbackId: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
+  srcOverride: PropTypes.string,
+  isEmbedded: PropTypes.bool,
 };

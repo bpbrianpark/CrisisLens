@@ -4,9 +4,9 @@ import { PlayIcon, PauseIcon } from "@livepeer/react/assets";
 import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
-import './playback.css'
+import "./playback.css";
 
-export default function StreamPlayer({ selectedCluster, onClose }) {
+export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = false }) {
   const playbackId = selectedCluster.fires[0].playbackId;
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
     } finally {
       setLoading(false);
     }
-  }, [selectedCluster]);
+  }, [selectedCluster, playbackId]);
 
   useEffect(() => {
     if (autoPlayButtonRef.current) {
@@ -52,7 +52,7 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
     }
   }, [src]);
 
-  if (loading) return <p>Loading player...</p>;
+  if (loading) return <div className="player-loading"></div>;
   if (!src)
     return (
       <div className="playback-error-message">
@@ -62,9 +62,7 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
     );
 
   return (
-    <div
-      className="player"
-    >
+    <div className={`player ${isEmbedded ? "player-embedded" : ""}`}>
       <button
         ref={autoPlayButtonRef}
         onClick={() => {
@@ -79,9 +77,7 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
         className="play-button"
         aria-hidden="true"
       />
-      <div
-        className="player-root"
-      />
+      <div className="player-root" />
       <Player.Root
         src={src}
         onError={(error) => {
@@ -89,30 +85,26 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
           setVideoError(error);
         }}
       >
-        <Player.Container
-          className="player-container"
-        >
+        <Player.Container className="player-container">
           <Player.Video
             title="Livestream"
             className="player-video"
             autoPlay
-            muted
+            playsInline
+            preload="auto"
             ref={mediaElementRef}
             onError={(e) => console.error("Video element error:", e)}
             onLoadStart={() => {}}
             onLoadedData={() => {}}
             onPlay={() => {}}
           />
-          <button
-            onClick={onClose}
-            className="close-button"
-          >
-            Close
-          </button>
+          {!isEmbedded && (
+            <button onClick={onClose} className="close-button">
+              Close
+            </button>
+          )}
 
-          <Player.Controls
-            className="controls"
-          >
+          <Player.Controls className="controls">
             <Player.PlayPauseTrigger className="pause-trigger">
               <Player.PlayingIndicator asChild matcher={false}>
                 <PlayIcon className="player-icon" />
@@ -123,13 +115,11 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
             </Player.PlayPauseTrigger>
           </Player.Controls>
 
-          <Player.LoadingIndicator asChild>
-            <div
-              className="loading-indicator"
-            >
-              Loading livestream...
-            </div>
-          </Player.LoadingIndicator>
+          {!isEmbedded && (
+            <Player.LoadingIndicator asChild>
+              <div className="loading-indicator">Loading livestream...</div>
+            </Player.LoadingIndicator>
+          )}
 
           <Player.LiveIndicator>
             <div
@@ -147,22 +137,14 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
                 gap: "8px",
               }}
             >
-              <div
-                className="live-indicator"
-              />
+              <div className="live-indicator" />
               LIVE
             </div>
           </Player.LiveIndicator>
         </Player.Container>
       </Player.Root>
 
-      {videoError && (
-        <div
-          className="playback-error"
-        >
-          Error: {JSON.stringify(videoError)}
-        </div>
-      )}
+      {videoError && <div className="playback-error">Error: {JSON.stringify(videoError)}</div>}
     </div>
   );
 }
@@ -170,4 +152,5 @@ export default function StreamPlayer({ selectedCluster, onClose }) {
 StreamPlayer.propTypes = {
   selectedCluster: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
+  isEmbedded: PropTypes.bool,
 };

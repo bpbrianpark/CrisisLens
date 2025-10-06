@@ -1,0 +1,39 @@
+.record-button {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff4444;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.record-button:hover {
+  background-color: #ff3333;
+  transform: translateX(-50%) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.record-button:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.record-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: translateX(-50%);
+}
+
+.record-button:disabled:hover {
+  background-color: #ccc;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}

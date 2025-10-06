@@ -2,19 +2,19 @@ import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import PropTypes from "prop-types";
 
-function ClosurePopover({ map, location, event, onClose }) {
+function EmergencyPopover({ map, location, event, onClose }) {
   const popoverRef = useRef();
 
   useEffect(() => {
     if (!map || !location || !event) return;
 
     const style = document.createElement('style');
-    style.setAttribute('data-closure-popover', 'true');
+    style.setAttribute('data-emergency-popover', 'true');
     style.textContent = `
-      .custom-popup .mapboxgl-popup-tip {
+      .custom-emergency-popup .mapboxgl-popup-tip {
         display: none !important;
       }
-      .custom-popup .mapboxgl-popup-content {
+      .custom-emergency-popup .mapboxgl-popup-content {
         padding: 0 !important;
         border-radius: 14px !important;
         background: transparent !important;
@@ -24,7 +24,7 @@ function ClosurePopover({ map, location, event, onClose }) {
     document.head.appendChild(style);
 
     const popoverElement = document.createElement("div");
-    popoverElement.className = "closure-popover";
+    popoverElement.className = "emergency-popover";
     popoverElement.style.cssText = `
       position: relative;
       display: flex;
@@ -77,46 +77,41 @@ function ClosurePopover({ map, location, event, onClose }) {
     const content = document.createElement("div");
     content.style.cssText = `
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      gap: 10px;
-      width: 100%;
+      gap: 12px;
     `;
+
+    const leadingIcon = document.createElement("div");
+    leadingIcon.style.cssText = `
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border: 1px solid rgba(220, 38, 38, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+      color: #991b1b;
+      font-size: 18px;
+      font-weight: 700;
+    `;
+    leadingIcon.textContent = "!";
 
     const textCol = document.createElement("div");
     textCol.style.cssText = `
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
+      gap: 4px;
     `;
 
     const title = document.createElement("div");
     title.style.cssText = `
+      font-weight: 700;
       color: #0f172a;
       letter-spacing: 0.1px;
-      text-align: center;
-      width: 100%;
     `;
-    const headlineText = event.headline || "Traffic Advisory";
-    const sentences = headlineText
-      .split('.')
-      .map(s => s.trim())
-      .filter(Boolean);
-    if (sentences.length > 0) {
-      sentences.forEach((s, idx) => {
-        const line = document.createElement('div');
-        line.style.cssText = `
-          margin: ${idx === 0 ? '0' : '2px 0 0 0'};
-          ${idx === 0 ? 'font-weight: 700;' : 'font-weight: 400;'}
-        `;
-        line.textContent = s + '.';
-        title.appendChild(line);
-      });
-    } else {
-      title.textContent = headlineText;
-    }
+    title.textContent = "EMS in Area";
 
     const pill = document.createElement("div");
     pill.style.cssText = `
@@ -125,44 +120,32 @@ function ClosurePopover({ map, location, event, onClose }) {
       gap: 6px;
       font-size: 12px;
       color: #334155;
-      margin-top: 2px;
     `;
     const dot = document.createElement("span");
     dot.style.cssText = `
       width: 8px;
       height: 8px;
       border-radius: 999px;
-      background: ${event.status === "ACTIVE" ? "#10b981" : "#9ca3af"};
-      box-shadow: 0 0 0 3px ${event.status === "ACTIVE" ? "rgba(16,185,129,0.18)" : "rgba(156,163,175,0.18)"};
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
     `;
     const pillText = document.createElement("span");
-    const roadName = event.roadName || (event.roads && event.roads[0] && event.roads[0].name) || "Road Closure";
-    pillText.textContent = `${event.eventType || "Closure"} • ${roadName}`;
+    pillText.textContent = event.callType || "Active response";
     pill.appendChild(dot);
     pill.appendChild(pillText);
 
-    const textColContainer = document.createElement("div");
-    textColContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      text-align: center;
-    `;
     textCol.appendChild(title);
     textCol.appendChild(pill);
-    textColContainer.appendChild(textCol);
-
-    content.appendChild(textColContainer);
+    content.appendChild(leadingIcon);
+    content.appendChild(textCol);
     popoverElement.appendChild(closeButton);
     popoverElement.appendChild(content);
 
     const popup = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
-      offset: [0, -6], 
-      className: 'custom-popup', 
+      offset: [0, 0], 
+      className: 'custom-emergency-popup', 
     })
       .setLngLat(location)
       .setDOMContent(popoverElement)
@@ -174,8 +157,7 @@ function ClosurePopover({ map, location, event, onClose }) {
       if (popoverRef.current) {
         popoverRef.current.remove();
       }
-
-      const existingStyle = document.querySelector('style[data-closure-popover]');
+      const existingStyle = document.querySelector('style[data-emergency-popover]');
       if (existingStyle) {
         existingStyle.remove();
       }
@@ -185,11 +167,11 @@ function ClosurePopover({ map, location, event, onClose }) {
   return null;
 }
 
-ClosurePopover.propTypes = {
+EmergencyPopover.propTypes = {
   map: PropTypes.object.isRequired,
   location: PropTypes.arrayOf(PropTypes.number).isRequired,
   event: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 
-export default ClosurePopover;
+export default EmergencyPopover;

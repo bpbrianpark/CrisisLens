@@ -18,6 +18,10 @@ import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 import { useNewsModal } from "../../hooks/useNewsModal";
 import { useTrafficData } from "../../hooks/useTrafficData";
 import { useClosurePopover } from "../../hooks/useClosurePopover";
+import { useEmergencyData } from "../../hooks/useEmergencyData";
+import { useEmergencyPopover } from "../../hooks/useEmergencyPopover";
+import EmergencyMarker from "./EmergencyMarker";
+import EmergencyPopover from "./EmergencyPopover";
 import { useVideoScroll } from "../../hooks/useVideoScroll";
 
 function Map() {
@@ -30,6 +34,8 @@ function Map() {
   const { closeStream } = useStreamPlayer();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
+  const { emergencyLoaded, emergencyLocations } = useEmergencyData(mapLoaded);
+  const { selectedEmergencyEvent, openEmergencyPopover, closeEmergencyPopover } = useEmergencyPopover();
   const [mapCenter, setMapCenter] = useState(null);
   const [mapStyleVersion, setMapStyleVersion] = useState(0);
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
@@ -133,6 +139,29 @@ function Map() {
           location={selectedClosureEvent.coordinates}
           event={selectedClosureEvent}
           onClose={closeClosurePopover}
+        />
+      )}
+
+      {/* Emergency Markers */}
+      {mapLoaded &&
+        emergencyLoaded &&
+        emergencyLocations.map((event, index) => (
+          <EmergencyMarker
+            key={index}
+            map={mapRef.current}
+            location={event.coordinates}
+            event={event}
+            onClick={openEmergencyPopover}
+          />
+        ))}
+
+      {/* Emergency Popover */}
+      {selectedEmergencyEvent && (
+        <EmergencyPopover
+          map={mapRef.current}
+          location={selectedEmergencyEvent.coordinates}
+          event={selectedEmergencyEvent}
+          onClose={closeEmergencyPopover}
         />
       )}
 

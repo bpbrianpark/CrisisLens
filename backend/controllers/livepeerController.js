@@ -15,6 +15,7 @@ export default class LivepeerController {
   }
 
   createStream() {
+    console.log("Creating new stream with Livepeer API...");
     const streamData = {
       name: uuidv4(),
       record: true,
@@ -42,6 +43,7 @@ export default class LivepeerController {
   }
 
   endStream(streamId) {
+    console.log(`Ending stream with ID ${streamId}...`);
     return this.client.stream
       .delete(streamId)
       .then(() => {
@@ -55,6 +57,7 @@ export default class LivepeerController {
 
   // Webhook helper for asset.ready events
   async handleAssetReady(asset) {
+    console.log(`Processing asset.ready webhook for asset ID ${asset.id}...`);
     if (!asset?.id) {
       throw new Error("Asset ID is required");
     }
@@ -62,13 +65,14 @@ export default class LivepeerController {
     let latitude = null;
     let longitude = null;
     let streamId = null;
-    
+    let crisis = "other";
+
     if (asset.snapshot?.source?.sessionId) {
       try {
         // Fetch session data to get parentId (which is the stream ID)
         const sessionData = await this.fetchSession(asset.snapshot.source.sessionId);
         streamId = sessionData.parentId;
-        
+
         // Get location data from the livestream document using the stream ID
         if (streamId) {
           const livestreamDoc = await this.db.collection("livestreams").doc(streamId).get();
@@ -76,6 +80,7 @@ export default class LivepeerController {
             const livestreamData = livestreamDoc.data();
             latitude = livestreamData.latitude;
             longitude = livestreamData.longitude;
+            crisis = livestreamData.crisis || "other";
           }
         }
       } catch (error) {
@@ -87,16 +92,18 @@ export default class LivepeerController {
           latitude = livestreamData.latitude;
           longitude = livestreamData.longitude;
           streamId = asset.snapshot.source.sessionId;
+          crisis = livestreamData.crisis || "other";
         }
       }
     }
-    
+
     await this.db.collection("assets").doc(asset.id).set({
       assetId: asset.id,
       title: "",
       name: asset.snapshot?.name || "",
       latitude: latitude,
       longitude: longitude,
+      crisis: crisis || "other",
       playbackId: asset.snapshot?.playbackId || "",
       downloadUrl: asset.snapshot?.downloadUrl || "",
       playbackUrl: asset.snapshot?.playbackUrl || "",
@@ -112,7 +119,7 @@ export default class LivepeerController {
       projectId: asset.snapshot?.projectId || null,
     });
     console.log(`Created Firestore document for asset ${asset.id}`);
-    
+
     // Delete the livestream document using the correct stream ID
     if (streamId) {
       await this.db.collection("livestreams").doc(streamId).delete();
@@ -127,12 +134,12 @@ export default class LivepeerController {
         Authorization: `Bearer ${this.apiKey}`,
       },
     });
-    
+
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Failed to fetch session: ${response.status} ${text}`);
     }
-    
+
     return response.json();
   }
 }

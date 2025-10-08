@@ -1,18 +1,21 @@
 import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import PropTypes from "prop-types";
+import { CRISIS_BY_ID } from "../../constants/crisisTypes";
 
-function FireMarker({ map, location, count = 1, onClick, fires }) {
+function CrisisMarker({ map, location, count = 1, onClick, crises }) {
   useEffect(() => {
     if (!map || !location || location.length !== 2) {
       console.error("Map or location is invalid:", { map, location });
       return;
     }
 
+    const crisisId = crises?.[0]?.crisis;
+    const crisisType = CRISIS_BY_ID[crisisId];
+    const iconUrl = crisisType?.iconUrl || "/icons/openmoji/other.svg";
+
     const markerElement = document.createElement("div");
-    markerElement.style.backgroundImage =
-      "url(https://uxwing.com/wp-content/themes/uxwing/download/e-commerce-currency-shopping/flame-icon.png)";
-    markerElement.style.backgroundSize = "contain";
+    markerElement.style.background = `no-repeat center/contain url(${iconUrl})`;
     markerElement.style.width = `${30 + count * 2}px`;
     markerElement.style.height = `${30 + count * 2}px`;
     markerElement.style.position = "absolute";
@@ -33,26 +36,24 @@ function FireMarker({ map, location, count = 1, onClick, fires }) {
       markerElement.appendChild(countBadge);
     }
 
-    const marker = new mapboxgl.Marker(markerElement)
-      .setLngLat(location)
-      .addTo(map);
+    const marker = new mapboxgl.Marker(markerElement).setLngLat(location).addTo(map);
 
     if (onClick) {
-      markerElement.addEventListener("click", () => onClick(fires));
+      markerElement.addEventListener("click", () => onClick(crises));
     }
 
     return () => marker.remove();
-  }, [map, location, count, onClick, fires]);
+  }, [map, location, count, onClick, crises]);
 
   return null;
 }
 
-FireMarker.propTypes = {
+CrisisMarker.propTypes = {
   map: PropTypes.object.isRequired,
   location: PropTypes.arrayOf(PropTypes.number).isRequired,
   count: PropTypes.number,
   onClick: PropTypes.func,
-  fires: PropTypes.arrayOf(PropTypes.object),
+  crises: PropTypes.arrayOf(PropTypes.object),
 };
 
-export default FireMarker;
+export default CrisisMarker;

@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
-export const useFireData = (mapLoaded) => {
-  const [fireData, setFireData] = useState([]);
-  const [fireLocations, setFireLocations] = useState([]);
+export const useCrisisData = (mapLoaded) => {
+  const [crisisData, setCrisisData] = useState([]);
+  const [crisisLocations, setCrisisLocations] = useState([]);
 
-  const processFireData = (livestreams, assets) => {
+  const processCrisisData = (livestreams, assets) => {
     const activeLivestreams = livestreams
-      .filter((stream) => 
-        stream.status !== "finished" && 
-        stream.longitude != null && 
+      .filter((stream) =>
+        stream.status !== "finished" &&
+        stream.longitude != null &&
         stream.latitude != null &&
         typeof stream.longitude === 'number' &&
         typeof stream.latitude === 'number'
@@ -22,9 +22,9 @@ export const useFireData = (mapLoaded) => {
       }));
 
     const readyAssets = assets
-      .filter((asset) => 
-        asset.status === "ready" && 
-        asset.longitude != null && 
+      .filter((asset) =>
+        asset.status === "ready" &&
+        asset.longitude != null &&
         asset.latitude != null &&
         typeof asset.longitude === 'number' &&
         typeof asset.latitude === 'number'
@@ -35,9 +35,9 @@ export const useFireData = (mapLoaded) => {
         isOnGoing: false,
       }));
 
-    const fires = [...activeLivestreams, ...readyAssets];
-    setFireData(fires);
-    setFireLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
+    const crises = [...activeLivestreams, ...readyAssets];
+    setCrisisData(crises);
+    setCrisisLocations(crises.map((crisis) => [crisis.longitude, crisis.latitude]));
   };
 
   useEffect(() => {
@@ -46,8 +46,8 @@ export const useFireData = (mapLoaded) => {
     let livestreamsData = [];
     let assetsData = [];
 
-    const updateFireData = () => {
-      processFireData(livestreamsData, assetsData);
+    const updateCrisisData = () => {
+      processCrisisData(livestreamsData, assetsData);
     };
 
     // Set up real-time listeners for livestreams
@@ -58,9 +58,10 @@ export const useFireData = (mapLoaded) => {
           id: doc.id,
           longitude: doc.data().longitude,
           latitude: doc.data().latitude,
+          crisis: doc.data().crisis,
           ...doc.data(),
         }));
-        updateFireData();
+        updateCrisisData();
       },
       (error) => {
         console.error("Error listening to livestreams:", error);
@@ -75,9 +76,10 @@ export const useFireData = (mapLoaded) => {
           id: doc.id,
           longitude: doc.data().longitude,
           latitude: doc.data().latitude,
+          crisis: doc.data().crisis,
           ...doc.data(),
         }));
-        updateFireData();
+        updateCrisisData();
       },
       (error) => {
         console.error("Error listening to assets:", error);
@@ -92,7 +94,7 @@ export const useFireData = (mapLoaded) => {
   }, [mapLoaded]);
 
   return {
-    fireData,
-    fireLocations,
+    crisisData,
+    crisisLocations,
   };
 };

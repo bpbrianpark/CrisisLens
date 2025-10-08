@@ -11,12 +11,12 @@ export function initializeController(db) {
 }
 
 router.post("/create", (req, res) => {
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude, crisis } = req.body;
 
   if (!latitude || !longitude) {
     return res.status(400).json({ message: "Latitude and longitude are required" });
   }
-  
+
   livepeerController
     .createStream()
     .then(async (streamData) => {
@@ -29,9 +29,10 @@ router.post("/create", (req, res) => {
         status: "active",
         latitude: latitude,
         longitude: longitude,
+        crisis: crisis || "general",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      
+
       res.status(201).json({
         message: "Stream created successfully",
         data: streamData,
@@ -55,7 +56,7 @@ router.delete("/end/:streamId", (req, res) => {
         status: "finished",
         endedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      
+
       res.status(200).json({
         message: `Stream with ID ${streamId} has been ended.`,
       });
@@ -77,7 +78,7 @@ router.post("/webhook", async (req, res) => {
       case "asset.ready":
         await livepeerController.handleAssetReady(payload.asset);
         return res.status(200).json({ message: "Asset ready processed" });
-      
+
       default:
         console.log(`Unhandled webhook event: ${event}`);
         return res.status(200).json({ message: `Event ${event} acknowledged but not processed` });

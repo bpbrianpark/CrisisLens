@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
-import FireMarker from "./FireMarker";
+import CrisisMarker from "./CrisisMarker";
 import NewsMarker from "./NewsMarker";
 import ClosureMarker from "./ClosureMarker";
 import ClosurePopover from "./ClosurePopover";
@@ -9,9 +9,9 @@ import NewsModal from "../NewsModal/NewsModal";
 import VideoScroll from "../VideoScroll/VideoScroll";
 import MapThemeToggle from "./MapThemeToggle";
 import { useMapInitialization } from "../../hooks/useMapInitialization";
-import { useFireData } from "../../hooks/useFireData";
+import { useCrisisData } from "../../hooks/useCrisisData";
 import { useNewsData } from "../../hooks/useNewsData";
-import { useFireClustering } from "../../hooks/useFireClustering";
+import { useCrisisClustering } from "../../hooks/useCrisisClustering";
 import { useNewsClustering } from "../../hooks/useNewsClustering";
 import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
@@ -26,10 +26,15 @@ import { useVideoScroll } from "../../hooks/useVideoScroll";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
-  const { fireData, fireLocations } = useFireData(mapLoaded);
-  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(fireLocations);
-  const { fireClusters, updateClusters } = useFireClustering(fireData, mapRef, mapLoaded);
-  const { newsClusters, updateNewsClusters } = useNewsClustering(newsLocations, newsArticlesForLocation, mapRef, mapLoaded);
+  const { crisisData, crisisLocations } = useCrisisData(mapLoaded);
+  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(crisisLocations);
+  const { crisesClusters, updateClusters } = useCrisisClustering(crisisData, mapRef, mapLoaded);
+  const { newsClusters, updateNewsClusters } = useNewsClustering(
+    newsLocations,
+    newsArticlesForLocation,
+    mapRef,
+    mapLoaded
+  );
   const { selectedNews, locationNames, isModalOpen, openModal, closeModal } = useNewsModal();
   const { closeStream } = useStreamPlayer();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
@@ -39,9 +44,9 @@ function Map() {
   const [mapCenter, setMapCenter] = useState(null);
   const [mapStyleVersion, setMapStyleVersion] = useState(0);
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
-    useVideoScroll(fireData, mapCenter, closeStream);
+    useVideoScroll(crisisData, mapCenter, closeStream);
 
-  useMapLayers(fireData, mapRef, mapLoaded);
+  useMapLayers(crisisData, mapRef, mapLoaded);
 
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
@@ -93,13 +98,13 @@ function Map() {
       {mapLoaded && <MapThemeToggle map={mapRef.current} onThemeChange={handleThemeChange} />}
 
       {mapLoaded &&
-        fireClusters.map((cluster, index) => (
-          <FireMarker
+        crisesClusters.map((cluster, index) => (
+          <CrisisMarker
             key={index}
             map={mapRef.current}
             location={cluster.center}
-            count={cluster.fires.length}
-            fires={cluster.fires}
+            count={cluster.crises.length}
+            crises={cluster.crises}
             onClick={() => {
               openVideoScroll(cluster);
               console.log(cluster);
@@ -114,9 +119,9 @@ function Map() {
             key={`news-${index}`}
             map={mapRef.current}
             location={cluster.center}
-            news={cluster.locations.flatMap(location => location.articles)}
+            news={cluster.locations.flatMap((location) => location.articles)}
             count={cluster.locations.length}
-            locationNames={cluster.locations.map(location => location.name)}
+            locationNames={cluster.locations.map((location) => location.name)}
             onClick={(news, locationNames) => openModal(news, locationNames)}
           />
         ))}
@@ -166,11 +171,11 @@ function Map() {
       )}
 
       {/* News Modal */}
-      <NewsModal 
-        isOpen={isModalOpen} 
-        news={selectedNews} 
-        onClose={closeModal} 
-        locationName={locationNames && locationNames.length > 0 ? locationNames.join(', ') : null}
+      <NewsModal
+        isOpen={isModalOpen}
+        news={selectedNews}
+        onClose={closeModal}
+        locationName={locationNames && locationNames.length > 0 ? locationNames.join(", ") : null}
       />
 
       {showVideoScroll && (

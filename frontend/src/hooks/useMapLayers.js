@@ -19,8 +19,8 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
     // Check the number of points
     if (points.features.length === 1) {
       // If there's only one point, create a circle around it
-      const singleFire = points.features[0];
-      const circle = turf.circle(singleFire.geometry.coordinates, 0.2, {
+      const singleCrisis = points.features[0];
+      const circle = turf.circle(singleCrisis.geometry.coordinates, 0.2, {
         steps: 64,
         units: "kilometers",
       });
@@ -81,7 +81,7 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
           // Calculate the convex hull for multiple points
           const clusterPoints = turf.featureCollection(cluster);
           const hull = turf.convex(clusterPoints);
-          
+
           // Check if convex hull was successfully created
           if (hull) {
             geometry = turf.buffer(hull, 0.2, { units: "kilometers" });

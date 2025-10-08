@@ -65,7 +65,7 @@ export default class LivepeerController {
     let latitude = null;
     let longitude = null;
     let streamId = null;
-    let crisis = "general";
+    let crisis = "other";
 
     if (asset.snapshot?.source?.sessionId) {
       try {
@@ -80,7 +80,7 @@ export default class LivepeerController {
             const livestreamData = livestreamDoc.data();
             latitude = livestreamData.latitude;
             longitude = livestreamData.longitude;
-            crisis = livestreamData.crisis || "general";
+            crisis = livestreamData.crisis || "other";
           }
         }
       } catch (error) {
@@ -92,7 +92,7 @@ export default class LivepeerController {
           latitude = livestreamData.latitude;
           longitude = livestreamData.longitude;
           streamId = asset.snapshot.source.sessionId;
-          crisis = livestreamData.crisis || "general";
+          crisis = livestreamData.crisis || "other";
         }
       }
     }
@@ -103,7 +103,7 @@ export default class LivepeerController {
       name: asset.snapshot?.name || "",
       latitude: latitude,
       longitude: longitude,
-      crisis: crisis || "general",
+      crisis: crisis || "other",
       playbackId: asset.snapshot?.playbackId || "",
       downloadUrl: asset.snapshot?.downloadUrl || "",
       playbackUrl: asset.snapshot?.playbackUrl || "",

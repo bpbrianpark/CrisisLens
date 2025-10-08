@@ -1,7 +1,7 @@
 // CrisisTypeModal.jsx
 import PropTypes from "prop-types";
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
-import { QUICK_PICK_IDS, CRISIS_TYPES, CATEGORY_ORDER, getByIds } from "../constants/crisisTypes";
+import { QUICK_PICK_IDS, CRISIS_TYPES, CATEGORY_ORDER, getByIds } from "../../constants/crisisTypes";
 
 const CrisisTypeModal = forwardRef(function CrisisTypeModal(
   { isOpen, onConfirm, onViewChange, defaultType = "wildfire" },

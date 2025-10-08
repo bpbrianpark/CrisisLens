@@ -2,7 +2,7 @@
 import { useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import CrisisTypeModal from "./CrisisTypeModal";
-import "../App.css";
+import "./GoLiveButton.css";
 
 const GoLiveButton = ({ handleStartStream }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +13,7 @@ const GoLiveButton = ({ handleStartStream }) => {
   const atTopLevel = modalView === "quick";
 
   const mainLabel = useMemo(() => {
-    if (!open) return "Record Now";
+    if (!open) return isLoading ? "Starting..." : "Record Now";
     return atTopLevel ? "Cancel" : "Back";
   }, [open, atTopLevel]);
 

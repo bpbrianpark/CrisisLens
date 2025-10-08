@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import PropTypes from "prop-types";
+import { CRISIS_BY_ID } from "../../constants/crisisTypes";
 
 function CrisisMarker({ map, location, count = 1, onClick, crises }) {
   useEffect(() => {
@@ -9,10 +10,12 @@ function CrisisMarker({ map, location, count = 1, onClick, crises }) {
       return;
     }
 
+    const crisisId = crises?.[0]?.crisis;
+    const crisisType = CRISIS_BY_ID[crisisId];
+    const iconUrl = crisisType?.iconUrl || "/icons/openmoji/other.svg";
+
     const markerElement = document.createElement("div");
-    markerElement.style.backgroundImage =
-      "url(https://uxwing.com/wp-content/themes/uxwing/download/e-commerce-currency-shopping/flame-icon.png)";
-    markerElement.style.backgroundSize = "contain";
+    markerElement.style.background = `no-repeat center/contain url(${iconUrl})`;
     markerElement.style.width = `${30 + count * 2}px`;
     markerElement.style.height = `${30 + count * 2}px`;
     markerElement.style.position = "absolute";
@@ -50,7 +53,7 @@ CrisisMarker.propTypes = {
   location: PropTypes.arrayOf(PropTypes.number).isRequired,
   count: PropTypes.number,
   onClick: PropTypes.func,
-  fires: PropTypes.arrayOf(PropTypes.object),
+  crises: PropTypes.arrayOf(PropTypes.object),
 };
 
 export default CrisisMarker;

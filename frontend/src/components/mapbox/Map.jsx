@@ -64,10 +64,10 @@ function Map() {
             zIndex: 99999,
           }}
         >
-          {selectedCluster.fires[0].isLiveStream ? (
+          {selectedCluster.crises[0].isLiveStream ? (
             <StreamPlayer selectedCluster={selectedCluster} onClose={closeStream} />
           ) : (
-            <VODPlayer playbackId={selectedCluster.fires[0].playbackId} onClose={closeStream} />
+            <VODPlayer playbackId={selectedCluster.crises[0].playbackId} onClose={closeStream} />
           )}
         </div>
       )}
@@ -82,8 +82,8 @@ function Map() {
             key={index}
             map={mapRef.current}
             location={cluster.center}
-            count={cluster.fires.length}
-            crises={cluster.fires}
+            count={cluster.crises.length}
+            crises={cluster.crises}
             onClick={() => {
               openStream(cluster);
               console.log(cluster);

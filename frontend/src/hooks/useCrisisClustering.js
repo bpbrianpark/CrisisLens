@@ -14,10 +14,10 @@ export const useCrisisClustering = (crisisData, mapRef) => {
         const distance = Math.sqrt(Math.pow(lng - location.longitude, 2) + Math.pow(lat - location.latitude, 2));
 
         if (distance <= zoomFactor) {
-          cluster.fires.push(location);
+          cluster.crises.push(location);
           cluster.center = [
-            (lng * cluster.fires.length + location.longitude) / (cluster.fires.length + 1),
-            (lat * cluster.fires.length + location.latitude) / (cluster.fires.length + 1),
+            (lng * cluster.crises.length + location.longitude) / (cluster.crises.length + 1),
+            (lat * cluster.crises.length + location.latitude) / (cluster.crises.length + 1),
           ];
           added = true;
           break;
@@ -27,7 +27,7 @@ export const useCrisisClustering = (crisisData, mapRef) => {
       if (!added) {
         clusters.push({
           center: [location.longitude, location.latitude],
-          fires: [location],
+          crises: [location],
         });
       }
     });

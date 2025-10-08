@@ -1,4 +1,5 @@
-import { useState } from "react";
+// GoLiveButton.jsx
+import { useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import CrisisTypeModal from "./CrisisTypeModal";
 import "../App.css";
@@ -6,14 +7,37 @@ import "../App.css";
 const GoLiveButton = ({ handleStartStream }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [modalView, setModalView] = useState("quick");
+  const modalRef = useRef(null);
+
+  const atTopLevel = modalView === "quick";
+
+  const mainLabel = useMemo(() => {
+    if (!open) return "Record Now";
+    return atTopLevel ? "Cancel" : "Back";
+  }, [open, atTopLevel]);
+
+  const handleMainClick = () => {
+    if (!open) {
+      setOpen(true);
+      return;
+    }
+    if (atTopLevel) {
+      setOpen(false);
+    } else {
+      modalRef.current?.goBack();
+    }
+  };
 
   const handleClick = async (typeId) => {
+    setOpen(false);
+    setModalView("quick");
+    if (!typeId) return;
+
     setIsLoading(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-
+        async ({ coords: { latitude, longitude } }) => {
           try {
             await handleStartStream({ latitude, longitude, crisis: typeId });
           } catch (error) {
@@ -25,28 +49,24 @@ const GoLiveButton = ({ handleStartStream }) => {
         },
         (error) => {
           console.error("Error getting location:", error);
-          let errorMessage = "Error getting location: ";
+          let msg = "Error getting location: ";
           switch (error.code) {
             case error.TIMEOUT:
-              errorMessage += "Request timed out. Please try again.";
+              msg += "Request timed out. Please try again.";
               break;
             case error.PERMISSION_DENIED:
-              errorMessage += "Please enable location permissions.";
+              msg += "Please enable location permissions.";
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage += "Location information unavailable.";
+              msg += "Location information unavailable.";
               break;
             default:
-              errorMessage += error.message;
+              msg += error.message;
           }
-          alert(errorMessage);
+          alert(msg);
           setIsLoading(false);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       alert("Geolocation is not supported by this browser.");
@@ -56,23 +76,16 @@ const GoLiveButton = ({ handleStartStream }) => {
 
   return (
     <>
-      <button
-        className="record-button"
-        onClick={() => {
-          open ? setOpen(false) : setOpen(true);
-        }}
-        disabled={isLoading}
-      >
-        {open ? "Cancel" : "Record Now"}
+      <button className="record-button" onClick={handleMainClick} disabled={isLoading}>
+        {mainLabel}
       </button>
+
       <CrisisTypeModal
+        ref={modalRef}
         isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={(typeId) => {
-          handleClick(typeId);
-          setOpen(false);
-        }}
-        defaultType="fire"
+        onConfirm={handleClick}
+        onViewChange={setModalView}
+        defaultType="wildfire"
       />
     </>
   );

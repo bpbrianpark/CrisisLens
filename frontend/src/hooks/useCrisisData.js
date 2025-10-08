@@ -6,7 +6,7 @@ export const useCrisisData = (mapLoaded) => {
   const [crisisData, setCrisisData] = useState([]);
   const [crisisLocations, setCrisisLocations] = useState([]);
 
-  const processFireData = (livestreams, assets) => {
+  const processCrisisData = (livestreams, assets) => {
     const activeLivestreams = livestreams
       .filter((stream) =>
         stream.status !== "finished" &&
@@ -35,9 +35,9 @@ export const useCrisisData = (mapLoaded) => {
         isOnGoing: false,
       }));
 
-    const fires = [...activeLivestreams, ...readyAssets];
-    setCrisisData(fires);
-    setCrisisLocations(fires.map((fire) => [fire.longitude, fire.latitude]));
+    const crises = [...activeLivestreams, ...readyAssets];
+    setCrisisData(crises);
+    setCrisisLocations(crises.map((crisis) => [crisis.longitude, crisis.latitude]));
   };
 
   useEffect(() => {
@@ -46,8 +46,8 @@ export const useCrisisData = (mapLoaded) => {
     let livestreamsData = [];
     let assetsData = [];
 
-    const updateFireData = () => {
-      processFireData(livestreamsData, assetsData);
+    const updateCrisisData = () => {
+      processCrisisData(livestreamsData, assetsData);
     };
 
     // Set up real-time listeners for livestreams
@@ -58,9 +58,10 @@ export const useCrisisData = (mapLoaded) => {
           id: doc.id,
           longitude: doc.data().longitude,
           latitude: doc.data().latitude,
+          crisis: doc.data().crisis,
           ...doc.data(),
         }));
-        updateFireData();
+        updateCrisisData();
       },
       (error) => {
         console.error("Error listening to livestreams:", error);
@@ -75,9 +76,10 @@ export const useCrisisData = (mapLoaded) => {
           id: doc.id,
           longitude: doc.data().longitude,
           latitude: doc.data().latitude,
+          crisis: doc.data().crisis,
           ...doc.data(),
         }));
-        updateFireData();
+        updateCrisisData();
       },
       (error) => {
         console.error("Error listening to assets:", error);

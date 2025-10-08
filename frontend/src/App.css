@@ -124,12 +124,14 @@
   justify-content: center;
   padding: 12px;
   border-radius: 8px;
+  max-height: 65vh;
+  overflow-y: auto;
 }
 
 .crisis-button {
   background-color: #404040;
   color: white;
-  padding: 12px 24px;
+  padding: 12px 18px;
   border: none;
   border-radius: 25px;
   font-size: 16px;
@@ -143,54 +145,14 @@
   background: #ff4444;
 }
 
-/* Panel slides up from bottom */
-.crisis-modal-content,
-.modal-grid {
-  transform-origin: bottom center;
-  animation: panel-rise-up 160ms ease-out both;
-  will-change: transform, opacity;
-}
-@keyframes panel-rise-up {
-  from { transform: translateY(16px) scale(0.98); opacity: 0; }
-  to   { transform: translateY(0)    scale(1);    opacity: 1; }
-}
-
-/* Items rise bottom -> top with stagger */
-.crisis-modal-content > *,
-.modal-grid > * {
+.crisis-modal-content > * {
   opacity: 0;
   transform: translateY(14px) scale(0.98);
   animation: item-rise-up 280ms cubic-bezier(.2,.8,.2,1) both;
   will-change: transform, opacity;
 }
+
 @keyframes item-rise-up {
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-/* Bottom-most appear first (reverse stagger) */
-.crisis-modal-content > *:nth-last-child(1),
-.modal-grid > *:nth-last-child(1) { animation-delay: 0ms; }
-.crisis-modal-content > *:nth-last-child(2),
-.modal-grid > *:nth-last-child(2) { animation-delay: 40ms; }
-.crisis-modal-content > *:nth-last-child(3),
-.modal-grid > *:nth-last-child(3) { animation-delay: 80ms; }
-.crisis-modal-content > *:nth-last-child(4),
-.modal-grid > *:nth-last-child(4) { animation-delay: 120ms; }
-.crisis-modal-content > *:nth-last-child(5),
-.modal-grid > *:nth-last-child(5) { animation-delay: 160ms; }
-.crisis-modal-content > *:nth-last-child(6),
-.modal-grid > *:nth-last-child(6) { animation-delay: 200ms; }
-.crisis-modal-content > *:nth-last-child(7),
-.modal-grid > *:nth-last-child(7) { animation-delay: 240ms; }
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .crisis-modal-content,
-  .modal-grid,
-  .crisis-modal-content > *,
-  .modal-grid > * {
-    animation: none !important;
-    transform: none !important;
-    opacity: 1 !important;
-  }
-}

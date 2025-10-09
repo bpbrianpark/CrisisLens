@@ -1,5 +1,3 @@
-// src/constants/crisisTypes.js
-
 export const CATEGORY_ORDER = [
     "Natural Hazard",
     "Fire",

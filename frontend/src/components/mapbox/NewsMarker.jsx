@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 function NewsMarker({ map, location, news, count = 1, onClick, locationNames }) {
   useEffect(() => {
     if (!news || news.length === 0) {
-      console.warn(`No news available for location: ${location}`);
+      console.warn(`No news available for location: [lng: ${location[0]}, lat: ${location[1]}]`);
       return;
     }
 

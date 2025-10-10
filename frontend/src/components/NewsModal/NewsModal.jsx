@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
+import { CRISIS_BY_ID } from "../../constants/crisisTypes";
 import "./NewsModal.css";
 
 function NewsModal({ isOpen, news, onClose, locationName }) {
@@ -70,24 +71,30 @@ function NewsModal({ isOpen, news, onClose, locationName }) {
 
         <div className="news-modal-content">
           <div className="news-articles">
-            {localNews.map((article, index) => (
-              <article key={index} className="news-article">
-                {article.image_url && (
-                  <div className="news-article-image-container">
-                    <img 
-                      src={article.image_url} 
-                      alt={article.title || "Article"} 
-                      className="news-article-image"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
+            {localNews.map((article, index) => {
+              const hasCrisisType = article.crisisType && CRISIS_BY_ID[article.crisisType]?.icon;
+              return (
+                <div key={index} className="news-article-wrapper">
+                  <div className="crisis-emoji-container" title={article.crisisType ? CRISIS_BY_ID[article.crisisType]?.label : 'No crisis type'}>
+                    {hasCrisisType ? CRISIS_BY_ID[article.crisisType].icon : '📰'}
                   </div>
-                )}
-                <div className="news-article-content">
-                  <h3 className="news-article-title">
-                    {article.title || "Untitled Article"}
-                  </h3>
+                <article className="news-article">
+                  {article.image_url && (
+                    <div className="news-article-image-container">
+                      <img 
+                        src={article.image_url} 
+                        alt={article.title || "Article"} 
+                        className="news-article-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="news-article-content">
+                    <h3 className="news-article-title">
+                      {article.title || "Untitled Article"}
+                    </h3>
                   <p className="news-article-description">
                     {article.description || "No description available."}
                   </p>
@@ -107,8 +114,10 @@ function NewsModal({ isOpen, news, onClose, locationName }) {
                     </a>
                   </div>
                 </div>
-              </article>
-            ))}
+                </article>
+              </div>
+              );
+            })}
           </div>
         </div>
       </div>

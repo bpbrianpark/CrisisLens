@@ -4,7 +4,6 @@ import { db } from "../firebase/firebase";
 
 export const useCrisisData = (mapLoaded) => {
   const [crisisData, setCrisisData] = useState([]);
-  const [crisisLocations, setCrisisLocations] = useState([]);
 
   const processCrisisData = (livestreams, assets) => {
     const activeLivestreams = livestreams
@@ -37,7 +36,6 @@ export const useCrisisData = (mapLoaded) => {
 
     const crises = [...activeLivestreams, ...readyAssets];
     setCrisisData(crises);
-    setCrisisLocations(crises.map((crisis) => [crisis.longitude, crisis.latitude]));
   };
 
   useEffect(() => {
@@ -95,6 +93,5 @@ export const useCrisisData = (mapLoaded) => {
 
   return {
     crisisData,
-    crisisLocations,
   };
 };

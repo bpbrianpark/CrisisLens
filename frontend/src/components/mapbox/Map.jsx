@@ -26,8 +26,8 @@ import { useVideoScroll } from "../../hooks/useVideoScroll";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
-  const { crisisData, crisisLocations } = useCrisisData(mapLoaded);
-  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(crisisLocations);
+  const { crisisData } = useCrisisData(mapLoaded);
+  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(crisisData);
   const { crisesClusters, updateClusters } = useCrisisClustering(crisisData, mapRef, mapLoaded);
   const { newsClusters, updateNewsClusters } = useNewsClustering(
     newsLocations,
@@ -112,19 +112,24 @@ function Map() {
           />
         ))}
 
-      {/* {mapLoaded &&
+      {mapLoaded &&
         newsLoaded &&
-        newsClusters.map((cluster, index) => (
-          <NewsMarker
-            key={`news-${index}`}
-            map={mapRef.current}
-            location={cluster.center}
-            news={cluster.locations.flatMap((location) => location.articles)}
-            count={cluster.locations.length}
-            locationNames={cluster.locations.map((location) => location.name)}
-            onClick={(news, locationNames) => openModal(news, locationNames)}
-          />
-        ))} */}
+        newsClusters
+          .filter((cluster) => {
+            const articles = cluster.locations.flatMap((location) => location.articles);
+            return articles.length > 0;
+          })
+          .map((cluster, index) => (
+            <NewsMarker
+              key={`news-${index}`}
+              map={mapRef.current}
+              location={cluster.center}
+              news={cluster.locations.flatMap((location) => location.articles)}
+              count={cluster.locations.length}
+              locationNames={cluster.locations.map((location) => location.name)}
+              onClick={(news, locationNames) => openModal(news, locationNames)}
+            />
+          ))}
 
       {mapLoaded &&
         trafficLoaded &&

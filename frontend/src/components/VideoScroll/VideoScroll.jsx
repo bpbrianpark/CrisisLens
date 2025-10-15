@@ -335,6 +335,8 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
               <div className="stack-item">
                 {(() => {
                   const nextVideo = nearbyVideos[stagedNextIndex];
+                  if (!nextVideo) return null;
+                  
                   return nextVideo.isLiveStream ? (
                     <StreamPlayer
                       key={`live-${nextVideo.playbackId ?? stagedNextIndex}`}

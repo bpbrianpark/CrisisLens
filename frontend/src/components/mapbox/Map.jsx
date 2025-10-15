@@ -112,7 +112,7 @@ function Map() {
           />
         ))}
 
-      {/* {mapLoaded &&
+      {mapLoaded &&
         newsLoaded &&
         newsClusters.map((cluster, index) => (
           <NewsMarker
@@ -124,7 +124,7 @@ function Map() {
             locationNames={cluster.locations.map((location) => location.name)}
             onClick={(news, locationNames) => openModal(news, locationNames)}
           />
-        ))} */}
+        ))}
 
       {mapLoaded &&
         trafficLoaded &&

@@ -25,6 +25,25 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
   const locationNamesRef = useRef({});
   const controls = useAnimationControls();
 
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "";
+    
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      console.error("Error formatting timestamp:", error);
+      return "";
+    }
+  };
+
   const prefetchSrc = useCallback(
     async (video) => {
       if (!video || !video.playbackId || srcCache.has(video.playbackId) || video.isLiveStream) return;
@@ -393,6 +412,11 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
             {currentVideo.duration && !currentVideo.isLiveStream && (
               <p className="video-duration-info">
                 ⏱️ {formatDuration(currentVideo.duration)}
+              </p>
+            )}
+            {currentVideo.createdAt && !currentVideo.isLiveStream && (
+              <p className="video-timestamp-info">
+                📹 {formatTimestamp(currentVideo.createdAt)}
               </p>
             )}
           </div>

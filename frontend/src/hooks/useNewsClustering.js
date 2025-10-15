@@ -41,12 +41,26 @@ export const useNewsClustering = (newsLocations, newsArticlesForLocation, mapRef
     const zoom = mapRef.current.getZoom();
     
     // Convert newsLocations object to array of location objects (like fireData)
-    const newsLocationData = Object.entries(newsLocations).map(([name, coordinates]) => ({
-      name,
-      longitude: coordinates[0],
-      latitude: coordinates[1],
-      articles: newsArticlesForLocation[name] || []
-    }));
+    const newsLocationData = Object.entries(newsLocations).map(([locationName, coordinates]) => {
+      // Collect all articles for this location from all location-crisis pairs
+      const allArticles = [];
+      const crisisTypes = new Set();
+      
+      Object.entries(newsArticlesForLocation).forEach(([locationCrisisKey, articles]) => {
+        if (locationCrisisKey.startsWith(locationName + '|')) {
+          const crisisType = locationCrisisKey.split('|')[1];
+          crisisTypes.add(crisisType);
+          allArticles.push(...articles);
+        }
+      });
+      
+      return {
+        name: locationName,
+        longitude: coordinates[0],
+        latitude: coordinates[1],
+        articles: allArticles
+      };
+    });
     
     const clusters = clusterNewsLocations(newsLocationData, zoom);
     

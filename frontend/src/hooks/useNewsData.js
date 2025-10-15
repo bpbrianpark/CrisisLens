@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { newsData } from "../components/mapbox/newsData";
 import { CRISIS_BY_ID } from "../constants/crisisTypes";
 
-const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+const NEWSDATA_API_KEY = import.meta.env.VITE_NEWS_DATA_API_KEY;
 
 export const useNewsData = (crisisData) => {
   const [newsLoaded, setNewsLoaded] = useState(false);
@@ -33,13 +33,54 @@ export const useNewsData = (crisisData) => {
   const getLocationName = async (longitude, latitude) => {
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=neighborhood,locality,place&access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=place,locality,district,region,country&access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}`
       );
+
+      if (!response.ok) {
+        throw new Error(`Mapbox geocoding failed: ${response.status}`);
+      }
+
       const data = await response.json();
-      return data.features.map((feature) => feature.text) || [];
+
+      if (data && data.features && data.features.length > 0) {
+        // Extract city, state, country from Mapbox response
+        let city = null;
+        let state = null;
+        let country = null;
+
+        data.features.forEach(feature => {
+          const placeType = feature.place_type[0];
+          const placeName = feature.text;
+          
+          if (placeType === 'place' || placeType === 'locality') {
+            city = placeName;
+          } else if (placeType === 'district' || placeType === 'region') {
+            state = placeName;
+          } else if (placeType === 'country') {
+            country = placeName;
+          }
+        });
+
+        // Return in same format as OpenStreetMap
+        if (city && state) {
+          return `${city}, ${state}`;
+        } else if (city && country) {
+          return `${city}, ${country}`;
+        } else if (city) {
+          return city;
+        } else if (state && country) {
+          return `${state}, ${country}`;
+        } else if (state) {
+          return state;
+        } else if (country) {
+          return country;
+        }
+      }
+
+      return `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
     } catch (error) {
-      console.error("Error fetching location name:", error);
-      return [];
+      console.error("Mapbox geocoding failed:", error);
+      return `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
     }
   };
 
@@ -76,23 +117,23 @@ export const useNewsData = (crisisData) => {
       console.log(`🔍 Fetching news for location: ${location} with crisis type: ${crisisTypeId}`);
       
       const crisisKeywords = getCrisisKeywords(crisisTypeId);
-      const query = encodeURIComponent(`${location} (${crisisKeywords})`);
+      const query = encodeURIComponent(`${location} AND ${crisisKeywords}`);
+      console.log("Query:", query);
 
       const response = await fetch(
-        `https://api.thenewsapi.com/v1/news/all?` +
-        `api_token=${NEWS_API_KEY}&` +
-        `search=${query}&` +
-        `limit=3&` +
-        `sort=published_at`
+        `https://newsdata.io/api/1/news?` +
+        `apikey=${NEWSDATA_API_KEY}&` +
+        `qInTitle=${query}&` +
+        `language=en&` +
+        `size=3`
       );
 
       const data = await response.json();
 
-      if (data && data.data && data.data.length > 0) {
-        console.log(`📰 News articles for ${location}:`, data.data);
-        return data.data;
+      if (data && data.results && data.results.length > 0) {
+        return data.results;
       } else {
-        console.warn(`No articles returned from API for ${location}. Returning random fallback articles.`);
+        console.warn(`No articles returned from NewsData.io for ${location}. Returning random fallback articles.`);
       }
     } catch (error) {
       console.error(`Error fetching news for ${location}:`, error);
@@ -107,21 +148,30 @@ export const useNewsData = (crisisData) => {
   };
 
   const updateLocationKeywords = async () => {
-    if (!crisisData.length) return;
-
-    const newKeywords = new Set();
-    const locationToCrisisMap = {};
-
-    for (const crisis of crisisData) {
-      const locationNames = await getLocationName(crisis.longitude, crisis.latitude);
-      locationNames.forEach((name) => {
-        newKeywords.add(name);
-        // Map each location name to its crisis type
-        locationToCrisisMap[name] = crisis.crisis;
-      });
+    if (!crisisData.length) {
+      return;
     }
 
-    setLocationKeywords(newKeywords);
+    const locationCrisisPairs = new Set();
+    const locationToCrisisMap = {};
+
+    const locationPromises = crisisData.map(async (crisis) => {
+      const locationName = await getLocationName(crisis.longitude, crisis.latitude);
+      return { locationName, crisis: crisis.crisis };
+    });
+
+    const results = await Promise.all(locationPromises);
+    
+    results.forEach(({ locationName, crisis }) => {
+      if (locationName) {
+        // Create unique key for location + crisis type combination
+        const locationCrisisKey = `${locationName}|${crisis}`;
+        locationCrisisPairs.add(locationCrisisKey);
+        locationToCrisisMap[locationCrisisKey] = { location: locationName, crisis };
+      }
+    });
+
+    setLocationKeywords(locationCrisisPairs);
     setLocationToCrisisType(locationToCrisisMap);
   };
 
@@ -130,7 +180,14 @@ export const useNewsData = (crisisData) => {
 
     const locationsMap = {};
 
-    for (const locationName of locationKeywords) {
+    // Extract unique location names from location-crisis pairs
+    const uniqueLocations = new Set();
+    for (const locationCrisisKey of locationKeywords) {
+      const { location } = locationToCrisisType[locationCrisisKey];
+      uniqueLocations.add(location);
+    }
+
+    for (const locationName of uniqueLocations) {
       const coordinates = await getCoordinatesForLocation(locationName);
       if (coordinates) {
         locationsMap[locationName] = coordinates;
@@ -141,15 +198,19 @@ export const useNewsData = (crisisData) => {
   };
 
   const updateNewsArticles = async () => {
-    if (!locationKeywords.size || isNewsFetching) return;
+    if (!locationKeywords.size || isNewsFetching) {
+      return;
+    }
 
     // Check if we already have all the articles we need
     const neededLocations = Array.from(locationKeywords).filter(location => !newsCache[location]);
     if (neededLocations.length === 0) {
+      console.log('📦 All articles already cached, using cached data');
       // All articles are already cached, just update the display
       const articlesMap = {};
-      for (const location of locationKeywords) {
-        articlesMap[location] = newsCache[location];
+      for (const locationCrisisKey of locationKeywords) {
+        const cachedArticles = newsCache[locationCrisisKey];
+        articlesMap[locationCrisisKey] = cachedArticles;
       }
       setNewsArticlesForLocation(articlesMap);
       setNewsLoaded(true);
@@ -159,27 +220,29 @@ export const useNewsData = (crisisData) => {
     setIsNewsFetching(true);
     const articlesMap = { ...newsArticlesForLocation };
 
-    for (const location of locationKeywords) {
-      // Check if we already have articles for this location
-      if (newsCache[location]) {
-        console.log(`📦 Using cached news for location: ${location}`);
-        articlesMap[location] = newsCache[location];
+    for (const locationCrisisKey of locationKeywords) {
+      // Check if we already have articles for this location-crisis combination
+      if (newsCache[locationCrisisKey]) {
+        const cachedArticles = newsCache[locationCrisisKey];
+        console.log(`📦 Using cached news for: ${locationCrisisKey} (${cachedArticles.length} articles)`);
+        articlesMap[locationCrisisKey] = cachedArticles;
         continue;
       }
 
       // Only fetch if not already cached
-      const crisisTypeId = locationToCrisisType[location];
-      const articles = await fetchNewsForLocation(location, crisisTypeId);
+      const { location, crisis } = locationToCrisisType[locationCrisisKey];
+      const articles = await fetchNewsForLocation(location, crisis);
       if (articles) {
         // Add crisis type info to each article
         const articlesWithCrisisType = articles.map(article => ({
           ...article,
-          crisisType: crisisTypeId,
-          location: location
+          crisisType: crisis,
+          location: location,
+          locationCrisisKey: locationCrisisKey
         }));
-        articlesMap[location] = articlesWithCrisisType;
+        articlesMap[locationCrisisKey] = articlesWithCrisisType;
         // Cache the articles
-        setNewsCache(prev => ({ ...prev, [location]: articlesWithCrisisType }));
+        setNewsCache(prev => ({ ...prev, [locationCrisisKey]: articlesWithCrisisType }));
       }
     }
 

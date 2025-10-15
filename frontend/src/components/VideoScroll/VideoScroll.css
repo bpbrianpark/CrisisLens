@@ -121,6 +121,12 @@
   margin: 0;
 }
 
+.video-timestamp-info {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin: 0;
+}
+
 /* Close button */
 .close-button {
   position: absolute;

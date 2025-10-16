@@ -3,21 +3,32 @@ import { useState, useEffect, useCallback } from "react";
 export const useCrisisClustering = (crisisData, mapRef) => {
   const [crisesClusters, setCrisesClusters] = useState([]);
 
-  const clusterCrises = (locations, zoom) => {
-    const zoomFactor = 0.01 / Math.pow(2, zoom - 10);
+  const clusterCrises = useCallback((locations) => {
+    // Use screen distance instead of geographic distance
+    // Cluster radius in pixels - increased for more aggressive clustering
+    const clusterRadiusPixels = 120;
     const clusters = [];
 
     locations.forEach((location) => {
       let added = false;
       for (const cluster of clusters) {
-        const [lng, lat] = cluster.center;
-        const distance = Math.sqrt(Math.pow(lng - location.longitude, 2) + Math.pow(lat - location.latitude, 2));
+        const [clusterLng, clusterLat] = cluster.center;
+        
+        // Convert both points to screen coordinates
+        const clusterPoint = mapRef.current.project([clusterLng, clusterLat]);
+        const locationPoint = mapRef.current.project([location.longitude, location.latitude]);
+        
+        // Calculate pixel distance
+        const pixelDistance = Math.sqrt(
+          Math.pow(clusterPoint.x - locationPoint.x, 2) + 
+          Math.pow(clusterPoint.y - locationPoint.y, 2)
+        );
 
-        if (distance <= zoomFactor) {
+        if (pixelDistance <= clusterRadiusPixels) {
           cluster.crises.push(location);
           cluster.center = [
-            (lng * cluster.crises.length + location.longitude) / (cluster.crises.length + 1),
-            (lat * cluster.crises.length + location.latitude) / (cluster.crises.length + 1),
+            (clusterLng * cluster.crises.length + location.longitude) / (cluster.crises.length + 1),
+            (clusterLat * cluster.crises.length + location.latitude) / (cluster.crises.length + 1),
           ];
           added = true;
           break;
@@ -33,15 +44,14 @@ export const useCrisisClustering = (crisisData, mapRef) => {
     });
 
     return clusters;
-  };
+  }, [mapRef]);
 
   const updateClusters = useCallback(() => {
     if (!mapRef.current || crisisData.length === 0) return;
 
-    const zoom = mapRef.current.getZoom();
-    const clusters = clusterCrises(crisisData, zoom);
+    const clusters = clusterCrises(crisisData);
     setCrisesClusters(clusters);
-  }, [crisisData, mapRef]);
+  }, [crisisData, clusterCrises, mapRef]);
 
   useEffect(() => {
     if (crisisData.length > 0) {

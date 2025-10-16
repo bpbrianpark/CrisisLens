@@ -46,7 +46,7 @@ function Map() {
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
     useVideoScroll(crisisData, mapCenter, closeStream);
 
-  useMapLayers(crisisData, mapRef, mapLoaded);
+  const { updateConvexHulls } = useMapLayers(crisisData, mapRef, mapLoaded);
 
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
@@ -61,6 +61,7 @@ function Map() {
       debounceTimeout = setTimeout(() => {
         updateClusters();
         updateNewsClusters();
+        updateConvexHulls();
         const center = currentMap.getCenter();
         setMapCenter({ latitude: center.lat, longitude: center.lng });
       }, 150);
@@ -72,7 +73,7 @@ function Map() {
       currentMap.off("moveend", handleMoveEnd);
       clearTimeout(debounceTimeout);
     };
-  }, [mapLoaded, updateClusters, updateNewsClusters, mapRef]);
+  }, [mapLoaded, updateClusters, updateNewsClusters, updateConvexHulls, mapRef]);
 
   // Handle map style changes and re-apply layers
   useEffect(() => {
@@ -81,10 +82,11 @@ function Map() {
       const timer = setTimeout(() => {
         updateClusters();
         updateNewsClusters();
+        updateConvexHulls();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [mapStyleVersion, updateClusters, updateNewsClusters]);
+  }, [mapStyleVersion, updateClusters, updateNewsClusters, updateConvexHulls]);
 
   const handleThemeChange = () => {
     // Increment version to trigger layer re-application

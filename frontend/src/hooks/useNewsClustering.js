@@ -3,21 +3,32 @@ import { useState, useEffect, useCallback } from "react";
 export const useNewsClustering = (newsLocations, newsArticlesForLocation, mapRef, mapLoaded) => {
   const [newsClusters, setNewsClusters] = useState([]);
 
-  const clusterNewsLocations = (locations, zoom) => {
-    const zoomFactor = 0.01 / Math.pow(2, zoom - 10);
+  const clusterNewsLocations = useCallback((locations) => {
+    // Use screen distance instead of geographic distance
+    // Cluster radius in pixels - increased for more aggressive clustering
+    const clusterRadiusPixels = 100;
     const clusters = [];
 
     locations.forEach((location) => {
       let added = false;
       for (const cluster of clusters) {
-        const [lng, lat] = cluster.center;
-        const distance = Math.sqrt(Math.pow(lng - location.longitude, 2) + Math.pow(lat - location.latitude, 2));
+        const [clusterLng, clusterLat] = cluster.center;
+        
+        // Convert both points to screen coordinates
+        const clusterPoint = mapRef.current.project([clusterLng, clusterLat]);
+        const locationPoint = mapRef.current.project([location.longitude, location.latitude]);
+        
+        // Calculate pixel distance
+        const pixelDistance = Math.sqrt(
+          Math.pow(clusterPoint.x - locationPoint.x, 2) + 
+          Math.pow(clusterPoint.y - locationPoint.y, 2)
+        );
 
-        if (distance <= zoomFactor) {
+        if (pixelDistance <= clusterRadiusPixels) {
           cluster.locations.push(location);
           cluster.center = [
-            (lng * cluster.locations.length + location.longitude) / (cluster.locations.length + 1),
-            (lat * cluster.locations.length + location.latitude) / (cluster.locations.length + 1),
+            (clusterLng * cluster.locations.length + location.longitude) / (cluster.locations.length + 1),
+            (clusterLat * cluster.locations.length + location.latitude) / (cluster.locations.length + 1),
           ];
           added = true;
           break;
@@ -33,12 +44,10 @@ export const useNewsClustering = (newsLocations, newsArticlesForLocation, mapRef
     });
 
     return clusters;
-  };
+  }, [mapRef]);
 
   const updateNewsClusters = useCallback(() => {
     if (!mapRef.current || !mapLoaded || Object.keys(newsLocations).length === 0) return;
-
-    const zoom = mapRef.current.getZoom();
     
     // Convert newsLocations object to array of location objects (like fireData)
     const newsLocationData = Object.entries(newsLocations).map(([locationName, coordinates]) => {
@@ -62,10 +71,10 @@ export const useNewsClustering = (newsLocations, newsArticlesForLocation, mapRef
       };
     });
     
-    const clusters = clusterNewsLocations(newsLocationData, zoom);
+    const clusters = clusterNewsLocations(newsLocationData);
     
     setNewsClusters(clusters);
-  }, [mapLoaded, newsLocations, newsArticlesForLocation, mapRef]);
+  }, [mapLoaded, newsLocations, newsArticlesForLocation, clusterNewsLocations, mapRef]);
 
   useEffect(() => {
     if (Object.keys(newsLocations).length > 0) {

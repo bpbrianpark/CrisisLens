@@ -8,6 +8,7 @@ import VODPlayer from "../livepeer/VODPlayer";
 import StreamPlayer from "../livepeer/StreamPlayer";
 
 import "./VideoScroll.css";
+import { getCrisisType } from "../../constants/crisisTypes";
 
 const livepeer = new Livepeer({ apiKey: import.meta.env.VITE_LIVEPEER_API_KEY });
 
@@ -33,7 +34,9 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
         const src = getSrc(info.playbackInfo) ?? `https://livepeercdn.com/hls/${video.playbackId}/index.m3u8`;
         setSrcCache((prev) => new Map(prev).set(video.playbackId, src));
       } catch {
-        setSrcCache((prev) => new Map(prev).set(video.playbackId, `https://livepeercdn.com/hls/${video.playbackId}/index.m3u8`));
+        setSrcCache((prev) =>
+          new Map(prev).set(video.playbackId, `https://livepeercdn.com/hls/${video.playbackId}/index.m3u8`)
+        );
       }
     },
     [srcCache]
@@ -181,9 +184,9 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
 
   const preloadVideos = useCallback(() => {
     if (nearbyVideos.length === 0) return;
-    
+
     const preloadCount = 10;
-    
+
     for (let i = 0; i < preloadCount; i++) {
       const nextIndex = (index + i + 1) % nearbyVideos.length;
       const prevIndex = (index - i - 1 + nearbyVideos.length) % nearbyVideos.length;
@@ -243,16 +246,7 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
       setIsTransitioning(false);
       setIsScrolling(false);
     },
-    [
-      isScrolling,
-      isTransitioning,
-      nearbyVideos.length,
-      computeNext,
-      index,
-      controls,
-      onVideoChange,
-      preloadVideos,
-    ]
+    [isScrolling, isTransitioning, nearbyVideos.length, computeNext, index, controls, onVideoChange, preloadVideos]
   );
 
   useEffect(() => {
@@ -336,7 +330,7 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
                 {(() => {
                   const nextVideo = nearbyVideos[stagedNextIndex];
                   if (!nextVideo) return null;
-                  
+
                   return nextVideo.isLiveStream ? (
                     <StreamPlayer
                       key={`live-${nextVideo.playbackId ?? stagedNextIndex}`}
@@ -368,8 +362,7 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
           >
             ↑
           </button>
-          
-          
+
           <button
             className={`nav-arrow nav-arrow-down ${isScrolling ? "disabled" : ""}`}
             onClick={() => handleScroll("down")}
@@ -382,18 +375,17 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
 
         <div className="video-info-overlay">
           <div className="video-info">
-            <h3 className="video-title">
-              {currentVideo.isLiveStream ? 'Live Stream' : 'Recorded Video'}
-            </h3>
+            <h3 className="video-title">{currentVideo.isLiveStream ? "Live Stream" : "Recorded Video"}</h3>
             <p className="video-location">
-              📍 {loadingLocations ? 'Loading location...' : 
-                   (locationNames[`${currentVideo.latitude},${currentVideo.longitude}`] || 
-                    `${currentVideo.latitude?.toFixed(2)}, ${currentVideo.longitude?.toFixed(2)}`)}
+              📍{" "}
+              {loadingLocations
+                ? "Loading location..."
+                : locationNames[`${currentVideo.latitude},${currentVideo.longitude}`] ||
+                  `${currentVideo.latitude?.toFixed(2)}, ${currentVideo.longitude?.toFixed(2)}`}
             </p>
+            {currentVideo?.crisis && <p className="video-location">🚨 {getCrisisType(currentVideo.crisis).label}</p>}
             {currentVideo.duration && !currentVideo.isLiveStream && (
-              <p className="video-duration-info">
-                ⏱️ {formatDuration(currentVideo.duration)}
-              </p>
+              <p className="video-duration-info">⏱️ {formatDuration(currentVideo.duration)}</p>
             )}
           </div>
         </div>

@@ -66,10 +66,21 @@ function Map() {
       }, 150);
     };
 
+    // Handle zoom changes to update convex hulls
+    const handleZoomEnd = () => {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        updateClusters();
+        updateNewsClusters();
+      }, 150);
+    };
+
     currentMap.on("moveend", handleMoveEnd);
+    currentMap.on("zoomend", handleZoomEnd);
 
     return () => {
       currentMap.off("moveend", handleMoveEnd);
+      currentMap.off("zoomend", handleZoomEnd);
       clearTimeout(debounceTimeout);
     };
   }, [mapLoaded, updateClusters, updateNewsClusters, mapRef]);

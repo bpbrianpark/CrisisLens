@@ -17,7 +17,6 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [locationNames, setLocationNames] = useState({});
   const [loadingLocations, setLoadingLocations] = useState(false);
-  const [geocodingDisabled, setGeocodingDisabled] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [stagedNextIndex, setStagedNextIndex] = useState(1);
   const [srcCache, setSrcCache] = useState(new Map());
@@ -44,37 +43,49 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
 
   const nearbyVideos = videos;
 
-  const getLocationName = useCallback(async (lat, lng, retryCount = 0) => {
-    const maxRetries = 2;
-
+  const getLocationName = useCallback(async (lat, lng) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place,locality,neighborhood&access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}`,
         {
-          headers: {
-            "User-Agent": "CrisisLens/1.0",
-          },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(5000),
         }
       );
 
       if (!response.ok) {
-        if (response.status === 429 && retryCount < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 2000 * (retryCount + 1)));
-          return getLocationName(lat, lng, retryCount + 1);
-        }
         throw new Error(`Geocoding request failed: ${response.status}`);
       }
 
       const data = await response.json();
 
-      if (data && data.address) {
-        const { address } = data;
+      if (data && data.features && data.features.length > 0) {
+        // Get the most specific place name (usually the first feature)
+        const place = data.features[0];
+        
+        // Try to get city and state/country from context
+        let city = null;
+        let state = null;
+        let country = null;
 
-        const city = address.city || address.town || address.village || address.hamlet;
-        const state = address.state || address.province || address.region;
-        const country = address.country;
+        // Check if the first feature is a place/locality
+        if (place.place_type.includes('place') || place.place_type.includes('locality')) {
+          city = place.text;
+        }
 
+        // Parse context for state/region and country
+        if (place.context) {
+          for (const ctx of place.context) {
+            if (ctx.id.startsWith('region')) {
+              state = ctx.text;
+            } else if (ctx.id.startsWith('country')) {
+              country = ctx.text;
+            } else if (!city && (ctx.id.startsWith('place') || ctx.id.startsWith('locality'))) {
+              city = ctx.text;
+            }
+          }
+        }
+
+        // Format the location string
         if (city && state) {
           return `${city}, ${state}`;
         } else if (city && country) {
@@ -83,10 +94,9 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
           return city;
         } else if (state && country) {
           return `${state}, ${country}`;
-        } else if (state) {
-          return state;
-        } else if (country) {
-          return country;
+        } else if (place.place_name) {
+          // Use the full place name as fallback
+          return place.place_name.split(',').slice(0, 2).join(',');
         }
       }
 
@@ -94,9 +104,6 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
     } catch (error) {
       if (error.name === "AbortError") {
         console.warn("Geocoding request timed out:", lat, lng);
-      } else if (error.message.includes("429") && retryCount < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 2000 * (retryCount + 1)));
-        return getLocationName(lat, lng, retryCount + 1);
       } else {
         console.warn("Geocoding failed:", error.message);
       }
@@ -110,69 +117,64 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
 
   useEffect(() => {
     let isCancelled = false;
-    let failureCount = 0;
 
     const fetchLocationNames = async () => {
-      if (geocodingDisabled) {
+      setLoadingLocations(true);
+
+      // Get first 10 videos and filter out ones we already have
+      const videosToProcess = nearbyVideos.slice(0, 10).filter((video) => {
+        if (!video.latitude || !video.longitude) return false;
+        const key = `${video.latitude},${video.longitude}`;
+        return !locationNamesRef.current[key];
+      });
+
+      if (videosToProcess.length === 0) {
         setLoadingLocations(false);
         return;
       }
 
-      setLoadingLocations(true);
-      const newLocationNames = {};
+      // Fetch all locations in parallel for much faster loading
+      const locationPromises = videosToProcess.map(async (video) => {
+        const key = `${video.latitude},${video.longitude}`;
+        try {
+          const locationName = await getLocationName(video.latitude, video.longitude);
+          return { key, locationName };
+        } catch (error) {
+          console.warn(`Failed to geocode ${key}:`, error);
+          return { key, locationName: `${video.latitude.toFixed(2)}, ${video.longitude.toFixed(2)}` };
+        }
+      });
 
-      const videosToProcess = nearbyVideos.slice(0, 5);
+      try {
+        const results = await Promise.all(locationPromises);
+        
+        if (!isCancelled) {
+          const newLocationNames = {};
+          results.forEach(({ key, locationName }) => {
+            newLocationNames[key] = locationName;
+          });
 
-      for (let i = 0; i < videosToProcess.length; i++) {
-        if (isCancelled || geocodingDisabled) break;
-
-        const video = videosToProcess[i];
-        if (video.latitude && video.longitude) {
-          const key = `${video.latitude},${video.longitude}`;
-          if (!locationNamesRef.current[key]) {
-            try {
-              const locationName = await getLocationName(video.latitude, video.longitude);
-              if (!isCancelled) {
-                newLocationNames[key] = locationName;
-                failureCount = 0;
-              }
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            } catch (error) {
-              failureCount++;
-              console.warn(`Failed to geocode ${key}:`, error);
-
-              if (failureCount >= 3) {
-                console.warn("Too many geocoding failures, disabling geocoding");
-                setGeocodingDisabled(true);
-                break;
-              }
-
-              if (!isCancelled) {
-                newLocationNames[key] = `${video.latitude.toFixed(2)}, ${video.longitude.toFixed(2)}`;
-              }
-            }
+          if (Object.keys(newLocationNames).length > 0) {
+            setLocationNames((prev) => ({ ...prev, ...newLocationNames }));
           }
         }
-      }
-
-      if (!isCancelled && Object.keys(newLocationNames).length > 0) {
-        setLocationNames((prev) => ({ ...prev, ...newLocationNames }));
-      }
-      if (!isCancelled) {
-        setLoadingLocations(false);
+      } catch (error) {
+        console.error("Error fetching location names:", error);
+      } finally {
+        if (!isCancelled) {
+          setLoadingLocations(false);
+        }
       }
     };
 
-    if (nearbyVideos.length > 0 && !geocodingDisabled) {
+    if (nearbyVideos.length > 0) {
       fetchLocationNames();
-    } else if (geocodingDisabled) {
-      setLoadingLocations(false);
     }
 
     return () => {
       isCancelled = true;
     };
-  }, [nearbyVideos, getLocationName, geocodingDisabled]);
+  }, [nearbyVideos, getLocationName]);
 
   const formatDuration = useCallback((duration) => {
     if (!duration || duration === 0) return "--:--";

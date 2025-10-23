@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const CLOSURE_ZOOM_LEVEL = 7;
+const CLOSURE_ZOOM_LEVEL = 9;
 
 export const useZoomVisibility = (mapRef, mapLoaded) => {
   const [currentZoom, setCurrentZoom] = useState(null);

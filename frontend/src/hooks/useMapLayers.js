@@ -32,7 +32,7 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
 
     const map = mapRef.current;
     const currentZoom = map.getZoom();
-    
+
     // Only show convex hulls when zoomed out (zoom level < 13)
     const shouldShowHulls = currentZoom < 13;
 
@@ -65,27 +65,28 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
 
     // Group all crisis points into ONE cluster if they're the same type and reasonably close
     // Then create a convex hull outline around them
-    
+
     // Determine if we have mostly large-scale or localized events
     const crisisTypes = fireData.map(f => f.crisis);
     const hasLargeScale = crisisTypes.some(isLargeScaleDisaster);
-    
+
     // Use appropriate clustering distance
-    const clusterDistance = hasLargeScale ? 100 : 15; // km - more generous to group related incidents
-    
+    // const clusterDistance = hasLargeScale ? 100 : 15; // km - more generous to group related incidents
+    const clusterDistance = hasLargeScale ? 3 : 15; // km - more generous to group related incidents
+
     const clusters = [];
     points.features.forEach((point) => {
       let addedToCluster = false;
-      
+
       for (const cluster of clusters) {
         // Check distance to any point in the cluster
         for (const clusterPoint of cluster) {
           const distance = turf.distance(
-            clusterPoint.geometry.coordinates, 
-            point.geometry.coordinates, 
+            clusterPoint.geometry.coordinates,
+            point.geometry.coordinates,
             { units: "kilometers" }
           );
-          
+
           if (distance <= clusterDistance) {
             cluster.push(point);
             addedToCluster = true;
@@ -94,7 +95,7 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
         }
         if (addedToCluster) break;
       }
-      
+
       if (!addedToCluster) {
         clusters.push([point]);
       }
@@ -103,10 +104,11 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
     // Process each cluster - create a tight convex hull with minimal buffer
     clusters.forEach((cluster, index) => {
       let geometry;
-      
+
       // Small, reasonable buffer that just outlines the points
-      const bufferDistance = hasLargeScale ? 3 : 1; // km - just a small outline
-      
+      // const bufferDistance = hasLargeScale ? 3 : 1; // km - just a small outline
+      const bufferDistance = hasLargeScale ? 0.5 : 1; // km - just a small outline
+
       if (cluster.length === 1) {
         // Single point: small circle
         geometry = turf.circle(cluster[0].geometry.coordinates, bufferDistance, {
@@ -119,22 +121,22 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
           cluster[0].geometry.coordinates,
           cluster[1].geometry.coordinates,
         ]);
-        geometry = turf.buffer(line, bufferDistance, { 
+        geometry = turf.buffer(line, bufferDistance, {
           units: "kilometers",
-          steps: 64 
+          steps: 64
         });
       } else {
         // 3+ points: convex hull with small buffer
         const clusterPoints = turf.featureCollection(cluster);
-        
+
         try {
           const hull = turf.convex(clusterPoints);
-          
+
           if (hull) {
             // Apply small buffer to create outline
-            geometry = turf.buffer(hull, bufferDistance, { 
+            geometry = turf.buffer(hull, bufferDistance, {
               units: "kilometers",
-              steps: 64 
+              steps: 64
             });
           } else {
             // Fallback: circle around centroid
@@ -174,7 +176,7 @@ export const useMapLayers = (fireData, mapRef, mapLoaded) => {
           "fill-outline-color": "#008000",
         },
       });
-      
+
       clusterLayersRef.current.push(layerId);
     });
 

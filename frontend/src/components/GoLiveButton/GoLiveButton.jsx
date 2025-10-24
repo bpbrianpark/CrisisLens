@@ -15,7 +15,7 @@ const GoLiveButton = ({ handleStartStream }) => {
   const mainLabel = useMemo(() => {
     if (!open) return isLoading ? "Starting..." : "Record Now";
     return atTopLevel ? "Cancel" : "Back";
-  }, [open, atTopLevel]);
+  }, [open, atTopLevel, isLoading]);
 
   const handleMainClick = () => {
     if (!open) {
@@ -42,7 +42,8 @@ const GoLiveButton = ({ handleStartStream }) => {
             await handleStartStream({ latitude, longitude, crisis: typeId });
           } catch (error) {
             console.error("Error starting stream:", error);
-            alert("Failed to start stream. Please try again.");
+            alert(error);
+            setIsLoading(false);
           } finally {
             setIsLoading(false);
           }

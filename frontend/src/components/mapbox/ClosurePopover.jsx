@@ -33,7 +33,7 @@ function ClosurePopover({ map, location, event, onClose }) {
       background: rgba(255,255,255,0.92);
       border: 1px solid rgba(17, 24, 39, 0.08);
       border-radius: 14px;
-      padding: 14px 14px 12px 14px;
+      padding: 20px 20px 16px 20px;
       box-shadow: 0 10px 30px rgba(2, 6, 23, 0.15);
       backdrop-filter: saturate(140%) blur(6px);
       width: 18rem;
@@ -46,32 +46,23 @@ function ClosurePopover({ map, location, event, onClose }) {
     closeButton.innerHTML = "×";
     closeButton.style.cssText = `
       position: absolute;
-      top: 8px;
-      right: 8px;
-      background: rgba(15, 23, 42, 0.04);
-      border: 1px solid rgba(17, 24, 39, 0.08);
+      top: 4px;
+      right: 4px;
+      background: none;
+      border: none;
       outline: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      font-size: 16px;
-      line-height: 26px;
+      width: 18px;
+      height: 18px;
+      font-size: 14px;
+      line-height: 18px;
       cursor: pointer;
-      color: #374151;
+      color: #666;
       padding: 0;
       margin: 0;
-      box-shadow: 0 1px 2px rgba(2, 6, 23, 0.06);
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
-      transition: background 120ms ease, transform 80ms ease;
     `;
-    closeButton.onmouseenter = () => {
-      closeButton.style.background = "rgba(15, 23, 42, 0.08)";
-    };
-    closeButton.onmouseleave = () => {
-      closeButton.style.background = "rgba(15, 23, 42, 0.04)";
-    };
     closeButton.onclick = onClose;
 
     const content = document.createElement("div");

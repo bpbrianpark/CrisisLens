@@ -20,6 +20,7 @@ import { useTrafficData } from "../../hooks/useTrafficData";
 import { useClosurePopover } from "../../hooks/useClosurePopover";
 import { useEmergencyData } from "../../hooks/useEmergencyData";
 import { useEmergencyPopover } from "../../hooks/useEmergencyPopover";
+import { useZoomVisibility } from "../../hooks/useZoomVisibility";
 import EmergencyMarker from "./EmergencyMarker";
 import EmergencyPopover from "./EmergencyPopover";
 import { useVideoScroll } from "../../hooks/useVideoScroll";
@@ -41,7 +42,9 @@ function Map() {
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
   const { emergencyLoaded, emergencyLocations } = useEmergencyData(mapLoaded);
   const { selectedEmergencyEvent, openEmergencyPopover, closeEmergencyPopover } = useEmergencyPopover();
+  const { shouldShowClosures, shouldShowEmergencies } = useZoomVisibility(mapRef, mapLoaded);
   const [mapCenter, setMapCenter] = useState(null);
+  
   const [mapStyleVersion, setMapStyleVersion] = useState(0);
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
     useVideoScroll(crisisData, mapCenter, closeStream);
@@ -68,9 +71,9 @@ function Map() {
 
     // Handle zoom changes to update convex hulls
     const handleZoomEnd = () => {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        updateClusters();
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          updateClusters();
         updateNewsClusters();
       }, 150);
     };
@@ -139,15 +142,18 @@ function Map() {
 
       {mapLoaded &&
         trafficLoaded &&
-        trafficLocations.map((event, index) => (
+        shouldShowClosures &&
+        trafficLocations.map((event, index) => {
+          return (
           <ClosureMarker
-            key={index}
-            map={mapRef.current}
-            location={event.coordinates}
-            event={event}
-            onClick={openClosurePopover}
-          />
-        ))}
+              key={index}
+              map={mapRef.current}
+              location={event.coordinates}
+              event={event}
+              onClick={openClosurePopover}
+            />
+          );
+        })}
 
       {selectedClosureEvent && (
         <ClosurePopover
@@ -161,6 +167,7 @@ function Map() {
       {/* Emergency Markers */}
       {mapLoaded &&
         emergencyLoaded &&
+        shouldShowEmergencies &&
         emergencyLocations.map((event, index) => (
           <EmergencyMarker
             key={index}

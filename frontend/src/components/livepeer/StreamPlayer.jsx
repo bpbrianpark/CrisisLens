@@ -5,6 +5,19 @@ import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
 import "./playback.css";
+import { Livepeer } from "livepeer";
+
+const getPlaybackSource = async ({ playbackId }) => {
+  try {
+    const livepeer = new Livepeer({ apiKey: import.meta.env.VITE_LIVEPEER_API_KEY });
+    const playbackInfo = await livepeer.playback.get(playbackId);
+    const src = getSrc(playbackInfo.playbackInfo);
+    return src;
+  } catch (error) {
+    console.log("help! playback error", error);
+    throw error;
+  }
+};
 
 export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = false }) {
   const playbackId = selectedCluster.fires[0].playbackId;
@@ -15,30 +28,27 @@ export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = fa
   const autoPlayButtonRef = useRef(null);
 
   useEffect(() => {
-    try {
-      const source = {
-        type: "playback",
-        meta: {
-          live: true,
-          playbackId: playbackId,
-        },
-      };
+    const loadPlaybackSource = async () => {
+      try {
+        setLoading(true);
+        const playbackUrl = await getPlaybackSource({ playbackId });
 
-      const playbackUrl = getSrc(source);
-
-      if (playbackUrl) {
-        setSrc(playbackUrl);
-      } else {
-        const hlsUrl = `https://livepeercdn.com/hls/${playbackId}/index.m3u8`;
-        setSrc(hlsUrl);
+        if (playbackUrl) {
+          setSrc(playbackUrl);
+        } else {
+          const hlsUrl = `https://livepeercdn.com/hls/${playbackId}/index.m3u8`;
+          setSrc(hlsUrl);
+        }
+      } catch (error) {
+        console.error("Error setting up livestream:", error);
+        setVideoError(error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error setting up livestream:", error);
-      setVideoError(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCluster, playbackId]);
+    };
+
+    loadPlaybackSource();
+  }, [playbackId]);
 
   useEffect(() => {
     if (autoPlayButtonRef.current) {

@@ -1,0 +1,310 @@
+/* Desktop Banner */
+.incident-detail-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 0 0 16px 16px;
+  padding: 20px 24px;
+  color: white;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.incident-detail-banner.entering {
+  transform: translate(-50%, -100%);
+}
+
+.incident-detail-banner.entered {
+  transform: translate(-50%, 0);
+}
+
+.incident-detail-banner.exiting {
+  transform: translate(-50%, -100%);
+}
+
+/* Mobile Top Banner */
+.incident-detail-sheet {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 0 0 20px 20px;
+  padding: 12px 20px 24px;
+  color: white;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.incident-detail-sheet.entering {
+  transform: translateY(-100%);
+}
+
+.incident-detail-sheet.entered {
+  transform: translateY(0);
+}
+
+.incident-detail-sheet.exiting {
+  transform: translateY(-100%);
+}
+
+/* Handle for swipe-down on mobile */
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+  cursor: grab;
+}
+
+.sheet-handle:active {
+  cursor: grabbing;
+}
+
+/* Header Section */
+.incident-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.incident-title-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.incident-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.incident-icon img {
+  width: 28px;
+  height: 28px;
+}
+
+.incident-title-text {
+  flex: 1;
+}
+
+.incident-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
+}
+
+.incident-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.live {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+}
+
+.status-badge.archived {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.incident-type {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  margin-top: -10px;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.close-button:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Content Section */
+.incident-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.incident-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.detail-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.detail-label {
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 4px;
+}
+
+.detail-value {
+  color: white;
+  font-weight: 500;
+}
+
+.incident-description {
+  margin-top: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Nearby incidents indicator */
+.nearby-count {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 165, 0, 0.15);
+  border-left: 3px solid #ff9800;
+  border-radius: 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .incident-detail-banner {
+    display: none;
+  }
+  
+  .close-button {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .incident-detail-sheet {
+    display: none;
+  }
+  
+  .incident-detail-banner {
+    display: block;
+  }
+}
+
+/* Breaking News Banner Header (desktop only) */
+.breaking-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.breaking-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff4444;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.breaking-pulse {
+  width: 8px;
+  height: 8px;
+  background: #ff4444;
+  border-radius: 50%;
+  animation: breakingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes breakingPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+@media (max-width: 768px) {
+  .breaking-header {
+    display: none;
+  }
+}
+

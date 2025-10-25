@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-export const useCrisisClustering = (crisisData, mapRef) => {
+export const useCrisisClustering = (crisisData, mapRef, mapLoaded) => {
   const [crisesClusters, setCrisesClusters] = useState([]);
 
   const clusterCrises = (locations, zoom) => {
@@ -36,18 +36,18 @@ export const useCrisisClustering = (crisisData, mapRef) => {
   };
 
   const updateClusters = useCallback(() => {
-    if (!mapRef.current || crisisData.length === 0) return;
+    if (!mapRef.current || !mapLoaded || crisisData.length === 0) return;
 
     const zoom = mapRef.current.getZoom();
     const clusters = clusterCrises(crisisData, zoom);
     setCrisesClusters(clusters);
-  }, [crisisData, mapRef]);
+  }, [mapLoaded, crisisData, mapRef]);
 
   useEffect(() => {
-    if (crisisData.length > 0) {
+    if (crisisData.length > 0 && mapLoaded) {
       updateClusters();
     }
-  }, [crisisData, updateClusters]);
+  }, [crisisData, mapLoaded, updateClusters]);
 
   return {
     crisesClusters,

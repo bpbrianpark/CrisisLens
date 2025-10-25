@@ -20,7 +20,12 @@ function ClosureMarker({ map, location, event, onClick }) {
     markerElement.style.position = "absolute";
     markerElement.style.cursor = "pointer";
 
-    const marker = new mapboxgl.Marker(markerElement)
+    const marker = new mapboxgl.Marker({
+      element: markerElement,
+      anchor: 'center',
+      pitchAlignment: 'viewport',
+      rotationAlignment: 'viewport',
+    })
       .setLngLat(location)
       .addTo(map);
 

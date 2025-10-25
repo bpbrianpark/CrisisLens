@@ -101,7 +101,12 @@ function CrisisMarker({ map, location, count = 1, onClick, crises }) {
       markerElement.appendChild(mini);
     });
 
-    const marker = new mapboxgl.Marker(markerElement).setLngLat(location).addTo(map);
+    const marker = new mapboxgl.Marker({
+      element: markerElement,
+      anchor: 'center',
+      pitchAlignment: 'viewport', // Keep marker upright when map is pitched
+      rotationAlignment: 'viewport', // Keep marker oriented to screen
+    }).setLngLat(location).addTo(map);
 
     if (onClick) {
       markerElement.addEventListener("click", () => onClick(crises));

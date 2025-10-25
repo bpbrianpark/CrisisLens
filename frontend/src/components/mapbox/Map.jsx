@@ -2,49 +2,49 @@ import { useEffect, useState } from "react";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import CrisisMarker from "./CrisisMarker";
-import NewsMarker from "./NewsMarker";
+// import NewsMarker from "./NewsMarker";
 import ClosureMarker from "./ClosureMarker";
 import ClosurePopover from "./ClosurePopover";
-import NewsModal from "../NewsModal/NewsModal";
+// import NewsModal from "../NewsModal/NewsModal";
 import VideoScroll from "../VideoScroll/VideoScroll";
 import MapThemeToggle from "./MapThemeToggle";
+import IncidentDetailCard from "../IncidentDetail/IncidentDetailCard";
 import { useMapInitialization } from "../../hooks/useMapInitialization";
 import { useCrisisData } from "../../hooks/useCrisisData";
-import { useNewsData } from "../../hooks/useNewsData";
+// import { useNewsData } from "../../hooks/useNewsData";
 import { useCrisisClustering } from "../../hooks/useCrisisClustering";
-import { useNewsClustering } from "../../hooks/useNewsClustering";
+// import { useNewsClustering } from "../../hooks/useNewsClustering";
 import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
-import { useNewsModal } from "../../hooks/useNewsModal";
+// import { useNewsModal } from "../../hooks/useNewsModal";
 import { useTrafficData } from "../../hooks/useTrafficData";
 import { useClosurePopover } from "../../hooks/useClosurePopover";
 import { useEmergencyData } from "../../hooks/useEmergencyData";
-import { useEmergencyPopover } from "../../hooks/useEmergencyPopover";
 import EmergencyMarker from "./EmergencyMarker";
-import EmergencyPopover from "./EmergencyPopover";
 import { useVideoScroll } from "../../hooks/useVideoScroll";
+import { useSpotlightMode } from "../../hooks/useSpotlightMode";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
-  const { crisisData, crisisLocations } = useCrisisData(mapLoaded);
-  const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(crisisLocations);
+  const { crisisData } = useCrisisData(mapLoaded);
+  // const { newsLoaded, newsLocations, newsArticlesForLocation } = useNewsData(crisisLocations);
   const { crisesClusters, updateClusters } = useCrisisClustering(crisisData, mapRef, mapLoaded);
-  const { newsClusters, updateNewsClusters } = useNewsClustering(
-    newsLocations,
-    newsArticlesForLocation,
-    mapRef,
-    mapLoaded
-  );
-  const { selectedNews, locationNames, isModalOpen, openModal, closeModal } = useNewsModal();
+  // const { newsClusters, updateNewsClusters } = useNewsClustering(
+  //   newsLocations,
+  //   newsArticlesForLocation,
+  //   mapRef,
+  //   mapLoaded
+  // );
+  // const { selectedNews, locationNames, isModalOpen, openModal, closeModal } = useNewsModal();
   const { closeStream } = useStreamPlayer();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
   const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
   const { emergencyLoaded, emergencyLocations } = useEmergencyData(mapLoaded);
-  const { selectedEmergencyEvent, openEmergencyPopover, closeEmergencyPopover } = useEmergencyPopover();
   const [mapCenter, setMapCenter] = useState(null);
   const [mapStyleVersion, setMapStyleVersion] = useState(0);
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
     useVideoScroll(crisisData, mapCenter, closeStream);
+  const { spotlightState, enterSpotlight, exitSpotlight } = useSpotlightMode(mapRef);
 
   useMapLayers(crisisData, mapRef, mapLoaded);
 
@@ -60,7 +60,7 @@ function Map() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateClusters();
-        updateNewsClusters();
+        // updateNewsClusters();
         const center = currentMap.getCenter();
         setMapCenter({ latitude: center.lat, longitude: center.lng });
       }, 150);
@@ -71,7 +71,7 @@ function Map() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateClusters();
-        updateNewsClusters();
+        // updateNewsClusters();
       }, 150);
     };
 
@@ -83,7 +83,27 @@ function Map() {
       currentMap.off("zoomend", handleZoomEnd);
       clearTimeout(debounceTimeout);
     };
-  }, [mapLoaded, updateClusters, updateNewsClusters, mapRef]);
+  }, [mapLoaded, updateClusters, mapRef]);
+
+  // Handle map background clicks to exit flyover mode
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded || !spotlightState.isActive) return;
+
+    const currentMap = mapRef.current;
+    
+    const handleMapClick = (e) => {
+      // Only exit if clicking on the map canvas, not on markers
+      if (e.originalEvent.target.classList.contains('mapboxgl-canvas')) {
+        exitSpotlight();
+      }
+    };
+
+    currentMap.on("click", handleMapClick);
+
+    return () => {
+      currentMap.off("click", handleMapClick);
+    };
+  }, [mapRef, mapLoaded, spotlightState.isActive, exitSpotlight]);
 
   // Handle map style changes and re-apply layers
   useEffect(() => {
@@ -91,11 +111,11 @@ function Map() {
       // Give the style time to fully load before updating
       const timer = setTimeout(() => {
         updateClusters();
-        updateNewsClusters();
+        // updateNewsClusters();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [mapStyleVersion, updateClusters, updateNewsClusters]);
+  }, [mapStyleVersion, updateClusters]);
 
   const handleThemeChange = () => {
     // Increment version to trigger layer re-application
@@ -118,12 +138,12 @@ function Map() {
             crises={cluster.crises}
             onClick={() => {
               openVideoScroll(cluster);
-              console.log(cluster);
             }}
           />
         ))}
 
-      {mapLoaded &&
+      {/* News markers temporarily disabled */}
+      {/* {mapLoaded &&
         newsLoaded &&
         newsClusters.map((cluster, index) => (
           <NewsMarker
@@ -135,7 +155,7 @@ function Map() {
             locationNames={cluster.locations.map((location) => location.name)}
             onClick={(news, locationNames) => openModal(news, locationNames)}
           />
-        ))}
+        ))} */}
 
       {mapLoaded &&
         trafficLoaded &&
@@ -167,27 +187,22 @@ function Map() {
             map={mapRef.current}
             location={event.coordinates}
             event={event}
-            onClick={openEmergencyPopover}
+            isInSpotlight={spotlightState.isActive}
+            onClick={(clickedEvent) => {
+              // Trigger flyover for EMS
+              enterSpotlight(clickedEvent);
+            }}
           />
         ))}
 
-      {/* Emergency Popover */}
-      {selectedEmergencyEvent && (
-        <EmergencyPopover
-          map={mapRef.current}
-          location={selectedEmergencyEvent.coordinates}
-          event={selectedEmergencyEvent}
-          onClose={closeEmergencyPopover}
-        />
-      )}
 
-      {/* News Modal */}
-      <NewsModal
+      {/* News Modal - temporarily disabled */}
+      {/* <NewsModal
         isOpen={isModalOpen}
         news={selectedNews}
         onClose={closeModal}
         locationName={locationNames && locationNames.length > 0 ? locationNames.join(", ") : null}
-      />
+      /> */}
 
       {showVideoScroll && (
         <VideoScroll
@@ -195,6 +210,15 @@ function Map() {
           currentVideoIndex={currentVideoIndex}
           onVideoChange={changeVideo}
           onClose={closeVideoScroll}
+        />
+      )}
+
+      {/* EMS Detail Card (flyover mode) */}
+      {spotlightState.isActive && spotlightState.focusedIncident && (
+        <IncidentDetailCard
+          incident={spotlightState.focusedIncident}
+          onClose={exitSpotlight}
+          isEMS={true}
         />
       )}
     </>

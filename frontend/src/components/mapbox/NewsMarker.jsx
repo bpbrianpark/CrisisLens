@@ -37,7 +37,12 @@ function NewsMarker({ map, location, news, count = 1, onClick, locationNames }) 
       markerElement.appendChild(countBadge);
     }
 
-    const marker = new mapboxgl.Marker(markerElement).setLngLat(location).addTo(map);
+    const marker = new mapboxgl.Marker({
+      element: markerElement,
+      anchor: 'center',
+      pitchAlignment: 'viewport',
+      rotationAlignment: 'viewport',
+    }).setLngLat(location).addTo(map);
 
     if (onClick) {
       markerElement.addEventListener("click", () => onClick(news, locationNames));

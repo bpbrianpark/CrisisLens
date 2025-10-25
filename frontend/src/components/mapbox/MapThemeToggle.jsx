@@ -5,7 +5,7 @@ import "./MapThemeToggle.css";
 const MapThemeToggle = ({ map, onThemeChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("crisisLensMapTheme") || "day";
+    return localStorage.getItem("crisisLensMapTheme") || "night";
   });
   const dropdownRef = useRef(null);
 

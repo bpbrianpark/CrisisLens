@@ -308,3 +308,92 @@
   }
 }
 
+/* Traffic Incident Specific Styles */
+.incident-road {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #feca57;
+  border-radius: 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.road-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* Countdown Timer Styles */
+.incident-countdown {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.incident-countdown.expired {
+  background: rgba(255, 107, 107, 0.15);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  padding: 12px 16px;
+}
+
+.countdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.countdown-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.countdown-timestamp {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  text-align: right;
+}
+
+.countdown-time {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.countdown-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #feca57;
+  min-width: 50px;
+}
+
+.countdown-progress {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.countdown-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #feca57, #ff6b6b);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+

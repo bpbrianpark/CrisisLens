@@ -4,7 +4,6 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import CrisisMarker from "./CrisisMarker";
 // import NewsMarker from "./NewsMarker";
 import ClosureMarker from "./ClosureMarker";
-import ClosurePopover from "./ClosurePopover";
 // import NewsModal from "../NewsModal/NewsModal";
 import VideoScroll from "../VideoScroll/VideoScroll";
 import MapThemeToggle from "./MapThemeToggle";
@@ -18,11 +17,11 @@ import { useMapLayers } from "../../hooks/useMapLayers";
 import { useStreamPlayer } from "../../hooks/useStreamPlayer";
 // import { useNewsModal } from "../../hooks/useNewsModal";
 import { useTrafficData } from "../../hooks/useTrafficData";
-import { useClosurePopover } from "../../hooks/useClosurePopover";
 import { useEmergencyData } from "../../hooks/useEmergencyData";
 import EmergencyMarker from "./EmergencyMarker";
 import { useVideoScroll } from "../../hooks/useVideoScroll";
 import { useSpotlightMode } from "../../hooks/useSpotlightMode";
+import { useTrafficFlyover } from "../../hooks/useTrafficFlyover";
 
 function Map() {
   const { mapRef, mapContainerRef, mapLoaded } = useMapInitialization();
@@ -38,13 +37,13 @@ function Map() {
   // const { selectedNews, locationNames, isModalOpen, openModal, closeModal } = useNewsModal();
   const { closeStream } = useStreamPlayer();
   const { trafficLoaded, trafficLocations } = useTrafficData(mapLoaded);
-  const { selectedClosureEvent, openClosurePopover, closeClosurePopover } = useClosurePopover();
   const { emergencyLoaded, emergencyLocations } = useEmergencyData(mapLoaded);
   const [mapCenter, setMapCenter] = useState(null);
   const [mapStyleVersion, setMapStyleVersion] = useState(0);
   const { showVideoScroll, currentVideoIndex, filteredVideos, openVideoScroll, closeVideoScroll, changeVideo } =
     useVideoScroll(crisisData, mapCenter, closeStream);
   const { spotlightState, enterSpotlight, exitSpotlight } = useSpotlightMode(mapRef);
+  const { flyoverState, enterFlyover, exitFlyover } = useTrafficFlyover(mapRef);
 
   useMapLayers(crisisData, mapRef, mapLoaded);
 
@@ -85,16 +84,21 @@ function Map() {
     };
   }, [mapLoaded, updateClusters, mapRef]);
 
-  // Handle map background clicks to exit flyover mode
+  // Handle map background clicks to exit flyover mode (EMS or Traffic)
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || !spotlightState.isActive) return;
+    if (!mapRef.current || !mapLoaded || (!spotlightState.isActive && !flyoverState.isActive)) return;
 
     const currentMap = mapRef.current;
     
     const handleMapClick = (e) => {
       // Only exit if clicking on the map canvas, not on markers
       if (e.originalEvent.target.classList.contains('mapboxgl-canvas')) {
-        exitSpotlight();
+        if (spotlightState.isActive) {
+          exitSpotlight();
+        }
+        if (flyoverState.isActive) {
+          exitFlyover();
+        }
       }
     };
 
@@ -103,7 +107,29 @@ function Map() {
     return () => {
       currentMap.off("click", handleMapClick);
     };
-  }, [mapRef, mapLoaded, spotlightState.isActive, exitSpotlight]);
+  }, [mapRef, mapLoaded, spotlightState.isActive, flyoverState.isActive, exitSpotlight, exitFlyover]);
+
+  // Handle ESC key to exit flyover mode
+  useEffect(() => {
+    if (!spotlightState.isActive && !flyoverState.isActive) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (spotlightState.isActive) {
+          exitSpotlight();
+        }
+        if (flyoverState.isActive) {
+          exitFlyover();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [spotlightState.isActive, flyoverState.isActive, exitSpotlight, exitFlyover]);
 
   // Handle map style changes and re-apply layers
   useEffect(() => {
@@ -165,18 +191,12 @@ function Map() {
             map={mapRef.current}
             location={event.coordinates}
             event={event}
-            onClick={openClosurePopover}
+            onClick={(clickedEvent) => {
+              // Trigger flyover for traffic incidents
+              enterFlyover(clickedEvent);
+            }}
           />
         ))}
-
-      {selectedClosureEvent && (
-        <ClosurePopover
-          map={mapRef.current}
-          location={selectedClosureEvent.coordinates}
-          event={selectedClosureEvent}
-          onClose={closeClosurePopover}
-        />
-      )}
 
       {/* Emergency Markers */}
       {mapLoaded &&
@@ -219,6 +239,15 @@ function Map() {
           incident={spotlightState.focusedIncident}
           onClose={exitSpotlight}
           isEMS={true}
+        />
+      )}
+
+      {/* Traffic Detail Card (flyover mode) */}
+      {flyoverState.isActive && flyoverState.focusedIncident && (
+        <IncidentDetailCard
+          incident={flyoverState.focusedIncident}
+          onClose={exitFlyover}
+          isTraffic={true}
         />
       )}
     </>

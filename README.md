@@ -7,7 +7,6 @@
   <img src="https://github.com/user-attachments/assets/3a7283ab-12ff-42a3-92a6-77dea1fcafca" alt="Screen Recording 4" width="200">
 </div>
 
-
 ## 🌟 **Inspiration**
 
 CrisisLens was inspired by two pivotal global trends:

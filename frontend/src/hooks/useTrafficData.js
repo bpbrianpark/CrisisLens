@@ -46,6 +46,12 @@ export const useTrafficData = (mapLoaded) => {
         eventType: event.event_type,
         roadName: event.roads?.[0]?.name,
         severity: event.severity,
+        description: event.description,
+        startTime: event.start_time || event.created,
+        endTime: event.end_time || event.schedule?.end_time,
+        updatedTime: event.updated || event.last_updated,
+        direction: event.direction,
+        roads: event.roads,
       }));
 
     setTrafficLocations(locations);

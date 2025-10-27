@@ -7,10 +7,12 @@ import "./IncidentDetailCard.css";
  * Responsive Incident Detail Card
  * - Desktop: Top banner with breaking news style
  * - Mobile: Bottom sheet with swipe-to-dismiss
+ * - Supports EMS incidents and Traffic incidents with countdown
  */
-function IncidentDetailCard({ incident, onClose, isEMS = false }) {
+function IncidentDetailCard({ incident, onClose, isEMS = false, isTraffic = false }) {
   const [isMobile, setIsMobile] = useState(false);
   const [animationState, setAnimationState] = useState("entering");
+  const [countdown, setCountdown] = useState(null);
   const sheetRef = useRef(null);
   const touchStartY = useRef(0);
   const touchCurrentY = useRef(0);
@@ -35,6 +37,48 @@ function IncidentDetailCard({ incident, onClose, isEMS = false }) {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Calculate countdown for traffic incidents
+  useEffect(() => {
+    if (!isTraffic || !incident.endTime) {
+      setCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const end = new Date(incident.endTime);
+      const diff = end - now;
+
+      if (diff <= 0) {
+        setCountdown({ expired: true });
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      // Calculate progress percentage (assuming 24h typical duration if no start time)
+      const start = incident.startTime ? new Date(incident.startTime) : new Date(now - 24 * 60 * 60 * 1000);
+      const total = end - start;
+      const elapsed = now - start;
+      const progress = Math.min(100, Math.max(0, (elapsed / total) * 100));
+
+      setCountdown({
+        days,
+        hours,
+        minutes,
+        progress,
+        expired: false,
+      });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [isTraffic, incident.endTime, incident.startTime]);
 
   // Handle touch events for swipe-to-dismiss on mobile
   const handleTouchStart = (e) => {
@@ -78,11 +122,30 @@ function IncidentDetailCard({ incident, onClose, isEMS = false }) {
 
   if (!incident) return null;
 
-  // Handle EMS incidents differently from crisis incidents
-  const crisisType = isEMS ? CRISIS_BY_ID["structure_fire"] : CRISIS_BY_ID[incident.crisis];
-  const iconUrl = isEMS ? "/icons/openmoji/structure_fire.svg" : (crisisType?.iconUrl || "/icons/openmoji/other.svg");
-  const crisisLabel = isEMS ? (incident.callType || "Emergency Response") : (crisisType?.label || "Incident");
-  const isLive = isEMS ? true : (incident.isLiveStream || incident.isOnGoing);
+  // Handle different incident types
+  let crisisType, iconUrl, crisisLabel, isLive, statusText;
+  
+  if (isTraffic) {
+    // Traffic/Construction incident
+    iconUrl = "/icons/openmoji/road_closure.svg";
+    crisisLabel = incident.eventType || "Road Closure";
+    isLive = incident.status === "ACTIVE";
+    statusText = incident.status || "ACTIVE";
+  } else if (isEMS) {
+    // EMS incident
+    crisisType = CRISIS_BY_ID["structure_fire"];
+    iconUrl = "/icons/openmoji/structure_fire.svg";
+    crisisLabel = incident.callType || "Emergency Response";
+    isLive = true;
+    statusText = "RESPONDING";
+  } else {
+    // Crisis incident
+    crisisType = CRISIS_BY_ID[incident.crisis];
+    iconUrl = crisisType?.iconUrl || "/icons/openmoji/other.svg";
+    crisisLabel = crisisType?.label || "Incident";
+    isLive = incident.isLiveStream || incident.isOnGoing;
+    statusText = isLive ? "LIVE" : "ARCHIVED";
+  }
 
   const className = isMobile 
     ? `incident-detail-sheet ${animationState}`
@@ -118,7 +181,7 @@ function IncidentDetailCard({ incident, onClose, isEMS = false }) {
           
           <div className="incident-title-text">
             <div className="incident-label">
-              {isEMS ? "Emergency Services Response" : (isLive ? "Live Incident" : "Recent Incident")}
+              {isTraffic ? "Traffic Advisory" : (isEMS ? "Emergency Services Response" : (isLive ? "Live Incident" : "Recent Incident"))}
             </div>
             <div className="incident-status">
               <h2 className="incident-type">{crisisLabel}</h2>
@@ -128,7 +191,13 @@ function IncidentDetailCard({ incident, onClose, isEMS = false }) {
                   {incident.units.length} UNIT{incident.units.length > 1 ? "S" : ""}
                 </span>
               )}
-              {!isEMS && (
+              {isTraffic && (
+                <span className={`status-badge ${isLive ? "live" : "archived"}`}>
+                  {isLive && <span className="status-indicator" />}
+                  {statusText}
+                </span>
+              )}
+              {!isEMS && !isTraffic && (
                 <span className={`status-badge ${isLive ? "live" : "archived"}`}>
                   {isLive && <span className="status-indicator" />}
                   {isLive ? "LIVE" : "ARCHIVED"}
@@ -144,11 +213,57 @@ function IncidentDetailCard({ incident, onClose, isEMS = false }) {
       </div>
 
       {/* Details */}
-      {!isEMS && incident.description && (
+      {!isEMS && (isTraffic ? incident.headline : incident.description) && (
         <div className="incident-details">
           <div className="incident-description">
-            {incident.description}
+            {isTraffic ? incident.headline : incident.description}
           </div>
+          
+          {/* Road name for traffic incidents */}
+          {isTraffic && incident.roadName && (
+            <div className="incident-road">
+              <span className="road-label">Location:</span> {incident.roadName}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Countdown Timer for Traffic Incidents */}
+      {isTraffic && countdown && !countdown.expired && (
+        <div className="incident-countdown">
+          <div className="countdown-header">
+            <span className="countdown-label">Estimated Clearance</span>
+            {incident.updatedTime && (
+              <span className="countdown-timestamp">
+                Data as of {new Date(incident.updatedTime).toLocaleString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  hour: 'numeric', 
+                  minute: '2-digit',
+                  hour12: true 
+                })}
+              </span>
+            )}
+          </div>
+          
+          <div className="countdown-time">
+            {countdown.days > 0 && <span className="countdown-segment">{countdown.days}d</span>}
+            {countdown.hours > 0 && <span className="countdown-segment">{countdown.hours}h</span>}
+            <span className="countdown-segment">{countdown.minutes}m</span>
+          </div>
+          
+          <div className="countdown-progress">
+            <div 
+              className="countdown-progress-bar" 
+              style={{ width: `${countdown.progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {isTraffic && countdown?.expired && (
+        <div className="incident-countdown expired">
+          <span className="countdown-label">⚠️ Scheduled clearance time passed</span>
         </div>
       )}
     </div>
@@ -159,6 +274,7 @@ IncidentDetailCard.propTypes = {
   incident: PropTypes.object.isRequired,
   onClose: PropTypes.func.isRequired,
   isEMS: PropTypes.bool,
+  isTraffic: PropTypes.bool,
 };
 
 export default IncidentDetailCard;

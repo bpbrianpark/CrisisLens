@@ -19,6 +19,24 @@ export default class LivepeerController {
     const streamData = {
       name: uuidv4(),
       record: true,
+      lowLatency: true,
+      profiles: [
+        {
+          name: "480p_high_quality",
+          width: 854,
+          height: 480,
+          bitrate: 1000000,  // 2.5 Mbps 
+          fps: 20,  
+          audioBitrate: 0,
+          audioChannels: 0,
+          gopSize: 48,  
+          preset: "medium", 
+          profile: "H264Main",  
+          crf: 23,  // Constant Rate Factor (lower = better quality)
+          maxrate: 3000000,  
+          bufsize: 6000000   // Buffer size for smooth streaming
+        }
+      ]
     };
 
     return this.client.stream

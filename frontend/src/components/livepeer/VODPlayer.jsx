@@ -128,7 +128,15 @@ export default function VODPlayer({ playbackId, onClose, srcOverride, isEmbedded
             loop
             playsInline
             preload="auto"
+            muted={true}
             ref={mediaElementRef}
+            quality={{
+              auto: false,
+              levels: [
+                { name: "480p_high_quality", bitrate: 2500000 }
+              ]
+            }}
+            adaptiveBitrate={false}     
             onError={(e) => {
               console.error("Video element error:", e);
               // Only set error if it's a meaningful error

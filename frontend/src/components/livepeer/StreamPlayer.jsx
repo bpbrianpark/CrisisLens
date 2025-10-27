@@ -102,7 +102,15 @@ export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = fa
             autoPlay
             playsInline
             preload="auto"
+            muted={true}
             ref={mediaElementRef}
+            quality={{
+              auto: false,
+              levels: [
+                { name: "480p_high_quality", bitrate: 2500000 }
+              ]
+            }}
+            adaptiveBitrate={false}                              
             onError={(e) => console.error("Video element error:", e)}
             onLoadStart={() => {}}
             onLoadedData={() => {}}

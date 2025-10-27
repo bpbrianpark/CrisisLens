@@ -78,6 +78,17 @@
     position: absolute;
     top: 0;
     left: 0;
+    /* Optimize for complex content (faces, motion) */
+    image-rendering: optimizeQuality;
+    image-rendering: -webkit-optimize-contrast;
+    /* Force hardware acceleration */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    /* Improve video decoding */
+    will-change: transform;
+    /* Better color accuracy for faces */
+    color-scheme: dark;
 }
 
 /* Large Desktop styles - make video look like mobile device */

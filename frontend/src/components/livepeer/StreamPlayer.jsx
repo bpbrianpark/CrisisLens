@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
 import "./playback.css";
+import LoadingOverlay from "./LoadingOverlay";
 import { Livepeer } from "livepeer";
 
 const getPlaybackSource = async ({ playbackId }) => {
@@ -23,6 +24,7 @@ export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = fa
   const playbackId = selectedCluster.fires[0].playbackId;
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [overlayLoading, setOverlayLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
   const mediaElementRef = useRef(null);
   const autoPlayButtonRef = useRef(null);
@@ -96,6 +98,12 @@ export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = fa
         }}
       >
         <Player.Container className="player-container">
+          <LoadingOverlay 
+            isLoading={overlayLoading} 
+            duration={1500}
+            message="Loading..."
+            onComplete={() => setOverlayLoading(false)}
+          />
           <Player.Video
             title="Livestream"
             className="player-video"

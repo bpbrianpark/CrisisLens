@@ -6,6 +6,7 @@ import { Livepeer } from "livepeer";
 import PropTypes from "prop-types";
 
 import "./playback.css";
+import LoadingOverlay from "./LoadingOverlay";
 
 // Helper function to get playback source
 const getPlaybackSource = async ({ playbackId }) => {
@@ -23,6 +24,7 @@ const getPlaybackSource = async ({ playbackId }) => {
 export default function VODPlayer({ playbackId, onClose, srcOverride, isEmbedded = false }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [overlayLoading, setOverlayLoading] = useState(true);
   const [videoError, setVideoError] = useState(null);
   const [autoplayFailed, setAutoplayFailed] = useState(false);
   const mediaElementRef = useRef(null);
@@ -121,6 +123,12 @@ export default function VODPlayer({ playbackId, onClose, srcOverride, isEmbedded
         }}
       >
         <Player.Container className="player-container">
+          <LoadingOverlay 
+            isLoading={overlayLoading} 
+            duration={1000}
+            message="Loading..."
+            onComplete={() => setOverlayLoading(false)}
+          />
           <Player.Video
             title="Livestream"
             className="player-video"

@@ -67,7 +67,7 @@ export const useEmergencyData = (mapLoaded) => {
 
   const fetchEmergencyData = async () => {
     try {
-        const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000 * 5);
         const yesterday = formatLocalTimestamp(yesterdayDate);
 
       // Tried to use params, but axios encodes the URL in a way that Socrata does not like

@@ -37,6 +37,14 @@ export const useMapInitialization = () => {
     topLeftContainer.style.gap = "12px";
     topLeftContainer.style.paddingLeft = "16px";
     topLeftContainer.style.paddingTop = "16px";
+    
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      topLeftContainer.style.position = "absolute";
+      topLeftContainer.style.left = "50%";
+      topLeftContainer.style.transform = "translateX(-50%)";
+      topLeftContainer.style.top = "env(safe-area-inset-top, 16px)";
+    }
 
     // Add the logo to the container
     const logo = document.createElement("img");
@@ -52,15 +60,22 @@ export const useMapInitialization = () => {
     const geocoderEl = geocoder.onAdd(mapRef.current);
     topLeftContainer.appendChild(geocoderEl);
 
-    // Add the container to the top-left of the map
-    const topLeftControlGroup = mapRef.current.getContainer().querySelector(".mapboxgl-ctrl-top-left");
-    if (topLeftControlGroup) {
-      // Remove any existing custom-geocoder-container to avoid duplicates
-      const existingContainer = topLeftControlGroup.querySelector(".custom-geocoder-container");
+    if (isMobile) {
+      const mapContainer = mapRef.current.getContainer();
+      const existingContainer = mapContainer.querySelector(".custom-geocoder-container");
       if (existingContainer) {
         existingContainer.remove();
       }
-      topLeftControlGroup.appendChild(topLeftContainer);
+      mapContainer.appendChild(topLeftContainer);
+    } else {
+      const topLeftControlGroup = mapRef.current.getContainer().querySelector(".mapboxgl-ctrl-top-left");
+      if (topLeftControlGroup) {
+        const existingContainer = topLeftControlGroup.querySelector(".custom-geocoder-container");
+        if (existingContainer) {
+          existingContainer.remove();
+        }
+        topLeftControlGroup.appendChild(topLeftContainer);
+      }
     }
 
     const geolocateControl = new mapboxgl.GeolocateControl({

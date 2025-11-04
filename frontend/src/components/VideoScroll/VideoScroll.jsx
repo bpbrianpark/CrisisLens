@@ -375,6 +375,10 @@ const VideoScroll = ({ videos, currentVideoIndex, onVideoChange, onClose }) => {
           </button>
         </div>
 
+        <button className="mobile-close-video-button" onClick={onClose} aria-label="Close Video">
+          ✕ Close Video
+        </button>
+
         <div className="video-info-overlay">
           <div className="video-info">
             <h3 className="video-title">{currentVideo.isLiveStream ? "Live Stream" : "Recorded Video"}</h3>

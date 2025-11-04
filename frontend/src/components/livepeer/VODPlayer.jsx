@@ -125,7 +125,7 @@ export default function VODPlayer({ playbackId, onClose, srcOverride, isEmbedded
         <Player.Container className="player-container">
           <LoadingOverlay 
             isLoading={overlayLoading} 
-            duration={1000}
+            duration={500}
             message="Loading..."
             onComplete={() => setOverlayLoading(false)}
           />

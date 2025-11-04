@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+// import axios from "axios";
 
-const BASE_URL = "https://data.sfgov.org/resource/nuek-vuh3.json";
+// const BASE_URL = "https://data.sfgov.org/resource/nuek-vuh3.json"; // TEMP: disabled for deploy branch
 const TRAFFIC_DATA_POLLING_INTERVAL = 60 * 60 * 1000; // 1 hour
-const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-const geocodeCache = new Map();
+// const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN; // TEMP: disabled for deploy branch
+// const geocodeCache = new Map(); // TEMP: disabled for deploy branch
 
 function formatLocalTimestamp(date) {
     const pad = (n) => String(n).padStart(2, "0");
@@ -17,46 +17,75 @@ function formatLocalTimestamp(date) {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000`;
   }
 
-// Helper for geocoding missing coordinates
-const geocodeAddress = async (address, zip) => {
-  if (!mapboxToken) {
-    console.error("Mapbox access token not found. Please set VITE_MAPBOX_ACCESS_TOKEN in your environment variables.");
-    return null;
-  }
+// TEMP: Geocoding helper disabled for deploy branch (no network calls)
+// const geocodeAddress = async (address, zip) => { return null; };
 
-  const cacheKey = zip;
-  if (cacheKey && geocodeCache.has(cacheKey)) {
-    return geocodeCache.get(cacheKey);
-  }
-
-  const makeGeocodeRequest = async (query) => {
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`;
-    const res = await axios.get(url, {
-      params: {
-        access_token: mapboxToken,
-        limit: 1,
-      },
-    });
-    return res.data.features[0]?.geometry?.coordinates || null;
+// TEMP: Hardcoded emergency generator (no API calls)
+const generateMockEmergencyData = () => {
+  const now = new Date();
+  const battalions = ["B01", "B02", "B03", "B04", "B05", "B06", "B07"];
+  const stationAreas = ["SA01", "SA02", "SA03", "SA04", "SA05", "SA06", "SA07", "SA08", "SA09", "SA10"];
+  const unitsPool = [
+    "E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10",
+    "T01", "T02", "T03", "T04", "T05",
+    "R01", "R02", "R03"
+  ];
+  // Fixed coordinates per ZIP (94110 and 94112 omitted due to missing centroids)
+  const zipToCoords = {
+    "94102": { lat: 37.77956, lng: -122.41931 },
+    "94103": { lat: 37.77374, lng: -122.41403 },
+    "94107": { lat: 37.77903, lng: -122.41991 },
+    "94109": { lat: 37.79298, lng: -122.42124 },
+    "94114": { lat: 37.75821, lng: -122.43556 },
+    "94116": { lat: 37.74540, lng: -122.48607 },
+    "94121": { lat: 37.76818, lng: -122.51050 },
+    "94122": { lat: 37.75975, lng: -122.47503 },
   };
 
-  try {
-    let coords = null;
-
-    if (!coords && zip) {
-      const zipQuery = `${parseInt(zip)} San Francisco, CA`;
-      coords = await makeGeocodeRequest(zipQuery);
+  const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const sampleUnique = (arr, k) => {
+    const copy = [...arr];
+    const out = [];
+    const n = Math.min(k, copy.length);
+    for (let i = 0; i < n; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      out.push(copy.splice(idx, 1)[0]);
     }
+    return out;
+  };
 
-    if (coords && cacheKey) {
-      geocodeCache.set(cacheKey, coords);
-    }
+  const makeUnits = () => {
+    const count = 1 + Math.floor(Math.random() * 3);
+    const shuffled = [...unitsPool].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
 
-    return coords || null;
-  } catch (err) {
-    console.error("Error geocoding:", zip, err);
-    return null;
-  }
+  const zips = sampleUnique(Object.keys(zipToCoords), 7);
+  return zips.map((zipcode) => {
+    const { lat, lng } = zipToCoords[zipcode];
+    const incident = 100000 + Math.floor(Math.random() * 900000);
+    const callNum = 500000 + Math.floor(Math.random() * 400000);
+    const minutesAgo = Math.floor(Math.random() * 180);
+    const timestamp = new Date(now.getTime() - minutesAgo * 60 * 1000);
+    const station_area = randomPick(stationAreas);
+    const battalion = randomPick(battalions);
+    const units = makeUnits();
+
+    return {
+      incident_number: String(incident),
+      call_number: String(callNum),
+      call_type: "Structure Fire / Smoke in Building",
+      address: `${100 + Math.floor(Math.random() * 800)} Market St`,
+      zipcode_of_incident: zipcode,
+      response_dttm: formatLocalTimestamp(timestamp),
+      latitude: lat,
+      longitude: lng,
+      battalion,
+      station_area,
+      units,
+      unit_id: units[0],
+    };
+  });
 };
 
 
@@ -65,68 +94,39 @@ export const useEmergencyData = (mapLoaded) => {
   const [emergencyLoaded, setEmergencyLoaded] = useState(false);
   const [emergencyLocations, setEmergencyLocations] = useState([]);
 
-  const fetchEmergencyData = async () => {
-    try {
-        const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const yesterday = formatLocalTimestamp(yesterdayDate);
-
-      // Tried to use params, but axios encodes the URL in a way that Socrata does not like
-      const response = await axios.get(`${BASE_URL}?$where=response_dttm >= '${yesterday}' AND call_type='Structure Fire / Smoke in Building'&$order=response_dttm DESC`);
-      
-
-      let data = response.data;
-
-      const geocoded = await Promise.all(
-        data.map(async (item) => {
-          const coords = await geocodeAddress(item.address, item.zipcode_of_incident);
-
-          if (coords) {
-            return {
-              ...item,
-              longitude: coords[0],
-              latitude: coords[1],
-            };
-          }
-
-          return null;
-        })
-      );
-
-      data = geocoded.filter(Boolean);
-
-      const groupedData = data.reduce((acc, item) => {
-        const incidentKey = item.incident_number || item.call_number;
-        if (!acc[incidentKey]) {
-          acc[incidentKey] = {
-            ...item,
-            units: [item.unit_id],
-            battalion: item.battalion,
-            stationArea: item.station_area,
-          };
-        } else {
-          if (!acc[incidentKey].units.includes(item.unit_id)) {
-            acc[incidentKey].units.push(item.unit_id);
-          }
-        }
-        return acc;
-      }, {});
-
-      const uniqueIncidents = Object.values(groupedData);
-
-      setEmergencyData(uniqueIncidents);
-      setEmergencyLoaded(true);
-    } catch (error) {
-      console.error("Error fetching emergency data:", error);
-    }
+  // TEMP: Replace network fetch with hardcoded mock generator
+  const loadMockEmergencyData = () => {
+    const data = generateMockEmergencyData();
+    // Group by incident to merge unit responses similar to original logic
+    const groupedData = data.reduce((acc, item) => {
+      const incidentKey = item.incident_number || item.call_number;
+      if (!acc[incidentKey]) {
+        acc[incidentKey] = {
+          ...item,
+          units: Array.isArray(item.units) ? [...item.units] : [item.unit_id].filter(Boolean),
+        };
+      } else {
+        const unitIds = Array.isArray(item.units) ? item.units : [item.unit_id].filter(Boolean);
+        unitIds.forEach((u) => {
+          if (!acc[incidentKey].units.includes(u)) acc[incidentKey].units.push(u);
+        });
+      }
+      return acc;
+    }, {});
+    const uniqueIncidents = Object.values(groupedData);
+    setEmergencyData(uniqueIncidents);
+    setEmergencyLoaded(true);
   };
 
   useEffect(() => {
     if (!mapLoaded) return;
 
-    fetchEmergencyData();
+    // TEMP: Use mock data instead of network fetch
+    loadMockEmergencyData();
 
-    const emergencyIntervalId = setInterval(fetchEmergencyData, TRAFFIC_DATA_POLLING_INTERVAL);
-    return () => clearInterval(emergencyIntervalId);
+    // TEMP: Disable polling while using mock data
+    // const emergencyIntervalId = setInterval(fetchEmergencyData, TRAFFIC_DATA_POLLING_INTERVAL);
+    // return () => clearInterval(emergencyIntervalId);
   }, [mapLoaded]);
 
   useEffect(() => {

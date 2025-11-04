@@ -1,52 +1,16 @@
-import { useState } from "react";
-import axios from "axios";
-import Map from "./components/mapbox/Map";
-import GoLiveButton from "./components/GoLiveButton/GoLiveButton";
-import StreamBroadcast from "./components/livepeer/StreamBroadcast";
-
-import "./App.css";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// import LandingPage from './pages/LandingPage';
+import MapPage from './pages/MapPage';
+import './App.css';
 
 export default function App() {
-  const [loading, setLoading] = useState(false);
-  const [streamData, setStreamData] = useState(null);
-
-  const handleStartStream = async ({ latitude, longitude, crisis }) => {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/livepeer/create`, {
-        latitude,
-        longitude,
-        crisis,
-      });
-      const { data } = response.data;
-      setStreamData(data);
-    } catch (error) {
-      console.error("Error starting stream:", error);
-      throw error;
-    }
-  };
-
-  const handleEndStream = async () => {
-    if (!streamData) return;
-    setLoading(true);
-    try {
-      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/livepeer/end/${streamData.id}`);
-      setStreamData(null);
-    } catch (error) {
-      console.error("Error ending stream:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div style={{ position: "relative", height: "100vh" }}>
-      {streamData && !loading && (
-        <div className="stream-overlay">
-          <StreamBroadcast streamKey={streamData.streamKey} onClose={handleEndStream} />
-        </div>
-      )}
-      <Map />
-      <GoLiveButton handleStartStream={handleStartStream} />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MapPage />} />
+        {/* <Route path="/" element={<LandingPage />} /> */}
+        {/* <Route path="/map" element={<MapPage />} /> */}
+      </Routes>
+    </BrowserRouter>
   );
 }

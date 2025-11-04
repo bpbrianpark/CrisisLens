@@ -100,7 +100,7 @@ export default function StreamPlayer({ selectedCluster, onClose, isEmbedded = fa
         <Player.Container className="player-container">
           <LoadingOverlay 
             isLoading={overlayLoading} 
-            duration={1500}
+            duration={3000}
             message="Loading..."
             onComplete={() => setOverlayLoading(false)}
           />
